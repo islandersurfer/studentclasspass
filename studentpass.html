@@ -13,27 +13,25 @@
         }
         /* Custom styles for the active log panel */
         .status-out {
-            background-color: #fff1ff; /* Light Purple-Pink */
+            background-color: #fff1ff; /* Light Purple-Pink (Restroom) */
             border-left: 4px solid #c084fc; /* Purple-400 */
+        }
+        /* Style for Office Pass */
+        .status-office {
+            background-color: #e0f2fe; /* Light Sky Blue (Office) */
+            border-left: 4px solid #38bdf8; /* Sky-400 */
         }
         /* Custom styles for the completed log panel */
         .status-in {
             background-color: #d1fae5; /* Green-100 */
             border-left: 4px solid #10b981; /* Green-500 */
         }
-        /* Custom styles for the dropdown content when collapsed */
         .log-collapsed {
-            max-height: 0;
-            opacity: 0;
-            visibility: hidden;
-            overflow: hidden; 
+            max-height: 0; opacity: 0; visibility: hidden; overflow: hidden; 
             transition: max-height 0.4s ease-in-out, opacity 0.4s ease-in-out;
         }
-        /* Custom styles for the dropdown content when open */
         .log-open {
-            max-height: 500px; /* Large enough value to contain the list */
-            opacity: 1;
-            visibility: visible;
+            max-height: 500px; opacity: 1; visibility: visible;
         }
     </style>
 </head>
@@ -42,9 +40,7 @@
     <div class="max-w-4xl mx-auto">
         <header class="text-center mb-6">
             <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Student Pass Tracker (Local Data)</h1>
-            <p class="text-gray-500 mt-2">
-                All data is saved directly in this browser using Local Storage.
-            </p>
+            <p class="text-gray-500 mt-2">All data is saved directly in this browser using Local Storage.</p>
         </header>
         
         <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
@@ -53,22 +49,10 @@
             <div class="mb-4 p-3 border border-indigo-200 rounded-lg bg-indigo-50">
                 <label class="text-sm font-semibold text-gray-700 block mb-2">Current Period:</label>
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-6" id="periodSelection">
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="currentPeriod" value="1" id="period1" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
-                        <span class="ml-2 text-gray-700 font-medium">Period 1</span>
-                    </label>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="currentPeriod" value="2" id="period2" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
-                        <span class="ml-2 text-gray-700 font-medium">Period 2</span>
-                    </label>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="currentPeriod" value="3" id="period3" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
-                        <span class="ml-2 text-gray-700 font-medium">Period 3</span>
-                    </label>
-                    <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="currentPeriod" value="4" id="period4" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
-                        <span class="ml-2 text-gray-700 font-medium">Period 4</span>
-                    </label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="1" id="period1" class="form-radio text-indigo-600 h-5 w-5"><span class="ml-2 text-gray-700 font-medium">Period 1</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="2" id="period2" class="form-radio text-indigo-600 h-5 w-5"><span class="ml-2 text-gray-700 font-medium">Period 2</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="3" id="period3" class="form-radio text-indigo-600 h-5 w-5"><span class="ml-2 text-gray-700 font-medium">Period 3</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="4" id="period4" class="form-radio text-indigo-600 h-5 w-5"><span class="ml-2 text-gray-700 font-medium">Period 4</span></label>
                 </div>
             </div>
 
@@ -76,784 +60,276 @@
                 <label class="text-sm font-semibold text-gray-700 block mb-2">Reason for Exit:</label>
                 <div class="flex flex-col sm:flex-row gap-3 sm:gap-6">
                     <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exitReason" value="Restroom" id="reasonRestroom" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
+                        <input type="radio" name="exitReason" value="Restroom" id="reasonRestroom" class="form-radio text-indigo-600 h-5 w-5">
                         <span class="ml-2 text-gray-700 font-medium">Restroom 🚽</span>
                     </label>
                     <label class="inline-flex items-center cursor-pointer">
-                        <input type="radio" name="exitReason" value="Office Pass" id="reasonOfficePass" class="form-radio text-indigo-600 h-5 w-5 focus:ring-indigo-500">
+                        <input type="radio" name="exitReason" value="Office Pass" id="reasonOfficePass" class="form-radio text-indigo-600 h-5 w-5">
                         <span class="ml-2 text-gray-700 font-medium">Office Pass 📋</span>
                     </label>
                 </div>
             </div>
 
             <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <input type="text" id="studentNameInput" placeholder="Enter Student Name..."
-                       list="studentNames"
-                       autocomplete="off"
-                       class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-150"
-                       required>
-                
+                <input type="text" id="studentNameInput" placeholder="Enter Student Name..." list="studentNames" autocomplete="off" class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 <datalist id="studentNames"></datalist>
-
-                <button id="signOutButton" onclick="handleSignOut()"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] w-full md:w-auto">
-                    Going Out 🏃
-                </button>
-
-                <button id="signInButton" onclick="handleSignIn()"
-                        class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition duration-150 ease-in-out transform hover:scale-[1.01] active:scale-[0.99] w-full md:w-auto">
-                    Returning ✅
-                </button>
+                <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-full md:w-auto">Going Out 🏃</button>
+                <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md w-full md:w-auto">Returning ✅</button>
             </div>
-            
             <p id="messageArea" class="mt-3 text-sm text-center text-red-600 font-medium"></p>
         </div>
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">
                 <div id="activeLogHeader" class="cursor-pointer flex justify-between items-center pb-2 border-b border-indigo-100" onclick="toggleActiveLog()">
-                    <h2 class="text-xl font-bold text-indigo-700 flex items-center">
-                        Students Currently Out 
-                        <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span>
-                    </h2>
-                    <svg id="dropdownIcon" class="w-5 h-5 text-indigo-600 transform transition-transform duration-300 rotate-0" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                    </svg>
+                    <h2 class="text-xl font-bold text-indigo-700 flex items-center">Students Currently Out <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span></h2>
                 </div>
-
                 <div id="activeLogContentWrapper" class="log-open pt-4">
                     <p class="text-gray-400 italic mb-3" id="noActiveMessage">No students currently signed out.</p>
-                    <div id="activeLogDisplay" class="space-y-3">
-                        </div>
+                    <div id="activeLogDisplay" class="space-y-3"></div>
                 </div>
             </div>
 
             <div class="lg:col-span-1">
-                
                 <div id="rosterConfigContainer" class="bg-white rounded-xl shadow-lg border border-gray-200">
-                    <div class="p-4 bg-gray-100 rounded-t-xl">
-                        <h3 class="font-semibold text-gray-700 text-xl">
-                            Roster Management 
-                            <span id="lockIndicator" class="text-red-500 text-sm ml-2">(Locked 🔒)</span>
-                        </h3>
-                    </div>
-                    
+                    <div class="p-4 bg-gray-100 rounded-t-xl"><h3 class="font-semibold text-gray-700 text-xl">Roster Management <span id="lockIndicator" class="text-red-500 text-sm ml-2">(Locked 🔒)</span></h3></div>
                     <div id="rosterPasswordArea" class="p-4 border-b border-gray-200">
-                        <label for="rosterPassword" class="block text-sm font-medium text-gray-700 mb-2">Enter Teacher Password:</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Teacher Password:</label>
                         <div class="flex gap-2">
-                            <input type="password" id="rosterPassword" placeholder="Password..."
-                                class="flex-grow p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
-                            <button onclick="checkPassword()"
-                                    class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded-lg text-sm transition duration-150 ease-in-out">
-                                Unlock
-                            </button>
+                            <input type="password" id="rosterPassword" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm">
+                            <button onclick="checkPassword()" class="bg-green-500 text-white font-semibold py-2 px-4 rounded-lg text-sm">Unlock</button>
                         </div>
                     </div>
-
                     <div id="rosterConfigContent" class="p-4 hidden">
                          <div class="mb-4">
-                            <label for="rosterEditPeriodSelector" class="block text-sm font-medium text-gray-700 mb-2">
-                                Select Roster to Edit/View:
-                            </label>
-                            <select id="rosterEditPeriodSelector" onchange="loadRosterForEditing()"
-                                    class="w-full p-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                            <select id="rosterEditPeriodSelector" onchange="loadRosterForEditing()" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
                                 <option value="1">Period 1 Roster</option>
                                 <option value="2">Period 2 Roster</option>
                                 <option value="3">Period 3 Roster</option>
                                 <option value="4">Period 4 Roster</option>
                             </select>
                         </div>
-                        
-                        <p class="text-sm text-gray-600 mb-2">
-                            Enter your student roster (one student per line, e.g., "John Smith 101").
-                        </p>
-                        <textarea id="rosterInput" rows="5" placeholder="Paste your student list here..."
-                            class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"></textarea>
-                        
-                        <div class="flex justify-between items-center mt-3">
-                            <button id="saveRosterButton" onclick="saveRoster()"
-                                class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg text-sm shadow-md transition duration-150 ease-in-out">
-                                Save Roster
-                            </button>
-                            <div class="flex items-center gap-4">
-                                <p id="rosterStatus" class="text-sm text-green-600"></p>
-                                <button id="lockRosterButton" onclick="lockRoster()"
-                                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium py-1 px-3 rounded-lg text-xs shadow-sm transition duration-150 ease-in-out">
-                                    Lock 🔒
-                                </button>
+                        <textarea id="rosterInput" rows="5" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono"></textarea>
+                        <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white font-semibold py-2 px-4 rounded-lg text-sm w-full">Save Roster</button>
+                        <div class="mt-4 pt-4 border-t">
+                            <p class="font-semibold text-gray-700">Sessions & History:</p>
+                            <div id="completedLogDisplay" class="mt-2 space-y-3 max-h-40 overflow-y-auto pr-2"></div>
+                            <div class="mt-4 flex justify-between">
+                                <button onclick="clearAllSessions()" class="text-red-600 text-xs hover:underline">Clear Logs</button>
+                                <button onclick="downloadLog()" id="exportButton" class="bg-gray-100 text-gray-500 text-xs px-2 py-1 rounded border" disabled>Export Log 💾</button>
                             </div>
                         </div>
-                        
-                        <div class="mt-4 pt-4 border-t border-gray-200">
-                            <p class="font-semibold text-gray-700">Current Period 1 Roster Loaded (<span id="rosterCount">0</span> names):</p>
-                            <ul id="currentRosterDisplay" class="text-sm text-gray-600 grid grid-cols-2 gap-x-4 max-h-32 overflow-y-auto mt-2">
-                                <li class="text-gray-400 italic col-span-2" id="noRosterMessage">Roster loading...</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="mt-6 pt-4 border-t border-gray-200 flex flex-col">
-                            <h2 class="text-xl font-bold mb-4 text-gray-700">Session Log (Teacher Access Only)</h2>
-                            <div id="completedLogDisplay" class="flex-grow space-y-3 max-h-60 overflow-y-auto pr-2">
-                                <p class="text-gray-400 italic" id="noCompletedMessage">Completed sessions will appear here.</p>
-                            </div>
-                            
-                            <div class="mt-6 flex justify-between items-center">
-                                <button onclick="clearAllSessions()"
-                                        class="bg-red-100 hover:bg-red-200 text-red-700 text-xs font-medium px-3 py-1 rounded transition duration-150 disabled:opacity-50 border border-red-300">
-                                    Clear All Logs 🗑️
-                                </button>
-                                <button onclick="downloadLog()"
-                                        class="self-end bg-gray-100 hover:bg-gray-200 text-gray-500 text-xs font-medium px-3 py-1 rounded transition duration-150 disabled:opacity-50 border border-gray-300"
-                                        id="exportButton" disabled>
-                                    Export Log 💾
-                                </button>
-                            </div>
-                        </div>
-                        </div>
+                    </div>
                 </div>
-                
             </div>
         </div>
-        
-        <footer class="text-center mt-8 text-xs text-gray-400">
-            Data saved locally in this browser.
-        </footer>
-
     </div>
 
     <script>
-        // --- Local Storage Keys ---
         const ROSTER_KEY = 'classRoster';
         const SESSIONS_KEY = 'classSessions';
         const LAST_ACTIVITY_DATE_KEY = 'lastActivityDate'; 
-
-        // --- Global State & Config (Now Local) ---
-        // Roster is now an object holding arrays for each period
         let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
-        let sessions = []; // In-memory cache for sessions
-        let isActiveLogOpen = true; 
+        let sessions = []; 
         const TEACHER_PASSWORD = "CHSteacher"; 
+        const DURATION_LIMIT_MS = 600000; 
 
-        // Constants
-        const DURATION_LIMIT_MS = 600000; // 10 minutes in milliseconds
-        const PERIOD_KEYS = ['1', '2', '3', '4']; // Helper array for periods
-
-        // DOM elements
-        const studentNameInput = document.getElementById('studentNameInput');
-        const messageArea = document.getElementById('messageArea');
-        const rosterPasswordArea = document.getElementById('rosterPasswordArea');
-        const rosterPasswordInput = document.getElementById('rosterPassword');
-        const rosterConfigContent = document.getElementById('rosterConfigContent');
-        const lockIndicator = document.getElementById('lockIndicator');
-
-        // --- Data Persistence Functions (Local Storage) ---
-        
-        /**
-         * Parses the hardcoded default roster text into the required object format.
-         * Default students are placed in Period 1.
-         */
-        function getDefaultRoster() {
-            // Define the roster as a simple array of strings: "Name Surname ID"
-            const rawDefaultRoster = [
-                "Jane Doe 101",
-                "John Smith 102",
-                "Alex P. Keaton A3",
-                "Elizabeth Bennet 21B",
-                "Theodor Seuss Geisel D1",
-                "Breck Dunn 8787",
-            ];
-            
-            let rosterForP1 = [];
-            rawDefaultRoster.forEach(line => {
-                const trimmedLine = line.trim();
-                if (trimmedLine === '') return;
-                const parts = trimmedLine.split(/\s+/).filter(p => p.length > 0);
-                
-                let name, id;
-                if (parts.length >= 2) {
-                    id = parts.pop(); 
-                    name = parts.join(' '); 
-                } else if (parts.length === 1) {
-                    name = parts[0];
-                    id = ''; 
-                } else {
-                    return;
-                }
-                rosterForP1.push({ name: name, id: id });
-            });
-
-            return {
-                '1': rosterForP1, 
-                '2': [],
-                '3': [],
-                '4': []
-            };
-        }
-
-        /**
-         * Loads sessions and roster from localStorage.
-         */
         function loadLocalData() {
-            const defaultRoster = getDefaultRoster();
-
-            // Load Roster from local storage
             const savedRoster = localStorage.getItem(ROSTER_KEY);
-            let rosterToUse = defaultRoster;
-
-            try {
-                if (savedRoster) {
-                    const loaded = JSON.parse(savedRoster);
-                    // Ensure the final roster object has all 4 keys, even if the save file was old
-                    rosterToUse = { 
-                        '1': loaded['1'] || [], 
-                        '2': loaded['2'] || [], 
-                        '3': loaded['3'] || [], 
-                        '4': loaded['4'] || [] 
-                    };
-                }
-            } catch (e) {
-                console.error("Failed to parse local roster:", e);
-                rosterToUse = defaultRoster;
-            }
-            
-            // Set the dynamic roster state
-            dynamicRoster = rosterToUse;
-
-            // Load Sessions
+            if (savedRoster) dynamicRoster = JSON.parse(savedRoster);
             const savedSessions = localStorage.getItem(SESSIONS_KEY);
-            try {
-                sessions = savedSessions ? JSON.parse(savedSessions) : [];
-            } catch (e) {
-                console.error("Failed to parse local sessions:", e);
-                sessions = [];
-            }
-
-            // Ensure sessions are sorted by outTime (oldest first)
-            sessions.sort((a, b) => a.outTime - b.outTime);
-            
-            // --- Initial UI Setup ---
-            
-            // Initial render
+            sessions = savedSessions ? JSON.parse(savedSessions) : [];
             renderLogs();
-            
-            // Load Period 1 roster into the Roster Management text area and display (for unlocked view)
             loadRosterForEditing(); 
         }
 
-        /**
-         * Saves the current roster object to localStorage.
-         */
-        function saveRosterToLocal() {
-            localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
-        }
+        function saveSessionsToLocal() { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); }
 
-        /**
-         * Saves the current sessions array to localStorage.
-         */
-        function saveSessionsToLocal() {
-            localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-        }
-        
-        // --- Password Protection Functions ---
-
-        /**
-         * Checks the entered password and unlocks the roster management section.
-         */
-        window.checkPassword = function() {
-            const password = rosterPasswordInput.value;
-            if (password === TEACHER_PASSWORD) {
-                // Success: Unlock the section
-                rosterPasswordArea.classList.add('hidden');
-                rosterConfigContent.classList.remove('hidden');
-                lockIndicator.textContent = '(Unlocked 🔓)';
-                lockIndicator.classList.remove('text-red-500');
-                lockIndicator.classList.add('text-green-600');
-                rosterPasswordInput.value = ''; // Clear password field
-                messageArea.textContent = ''; // Clear main message area
-                
-                // Reload the roster for the currently selected period (default P1)
-                loadRosterForEditing();
-                renderLogs(); // Re-render logs when unlocked just in case
-
-            } else {
-                // Failure: Show error
-                rosterPasswordInput.value = ''; // Clear password field
-                messageArea.textContent = 'Incorrect password for Roster Management.';
-                setTimeout(() => messageArea.textContent = '', 3000);
-            }
-        }
-        
-        /**
-         * Hides and locks the roster management section.
-         */
-        window.lockRoster = function() {
-            rosterConfigContent.classList.add('hidden');
-            rosterPasswordArea.classList.remove('hidden');
-            lockIndicator.textContent = '(Locked 🔒)';
-            lockIndicator.classList.remove('text-green-600');
-            lockIndicator.classList.add('text-red-500');
-            messageArea.textContent = ''; // Clear main message area
-        }
-
-        // --- Roster Management Functions ---
-
-        /**
-         * Updates the HTML datalist with provided student names for autocomplete.
-         */
-        function updateAutocompleteOptions(students) {
-            const datalist = document.getElementById('studentNames');
-            datalist.innerHTML = students.map(student => 
-                `<option value="${student.name}"></option>`
-            ).join('');
-        }
-
-        /**
-         * Reads the selected period in the Action Center and updates the student name autocomplete list.
-         */
-        function updateAutocompleteByPeriod() {
-            // Get the currently selected period (defaults to '1' if none is checked)
-            const selectedPeriod = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
-            
-            // Get the roster for that period
-            const students = dynamicRoster[selectedPeriod] || [];
-            
-            // Update the HTML datalist
-            updateAutocompleteOptions(students);
-        }
-        
-        /**
-         * Loads the roster for the selected period into the textarea and updates the display list.
-         */
-        window.loadRosterForEditing = function() {
-            const selector = document.getElementById('rosterEditPeriodSelector');
-            const rosterTextarea = document.getElementById('rosterInput');
-            const selectedPeriod = selector.value;
-            const periodTitle = document.querySelector('#rosterConfigContent .font-semibold');
-
-            // Get the roster array for the selected period
-            const rosterArray = dynamicRoster[selectedPeriod] || []; 
-            
-            // Format the roster back into the input text format (Name ID)
-            rosterTextarea.value = rosterArray.map(s => `${s.name} ${s.id || ''}`).join('\n');
-            
-            // Update the display list and title
-            periodTitle.innerHTML = `Current Period ${selectedPeriod} Roster Loaded (<span id="rosterCount">${rosterArray.length}</span> names):`;
-            renderRosterDisplay(rosterArray);
-        }
-
-        /**
-         * Renders the current student list in the configuration area for the selected period.
-         */
-        function renderRosterDisplay(rosterArray) {
-            const display = document.getElementById('currentRosterDisplay');
-            const noMessage = document.getElementById('noRosterMessage');
-
-            display.innerHTML = ''; 
-            document.getElementById('rosterCount').textContent = rosterArray.length;
-
-            if (rosterArray.length === 0) {
-                noMessage.textContent = 'No roster saved for this period yet.';
-                display.appendChild(noMessage);
-                noMessage.classList.remove('hidden');
-            } else {
-                noMessage.classList.add('hidden');
-                rosterArray.forEach(student => {
-                    const li = document.createElement('li');
-                    li.textContent = `${student.name} ${student.id ? `(${student.id})` : ''}`;
-                    display.appendChild(li);
-                });
-            }
-        }
-
-        /**
-         * Parses the plain text roster and saves it to Local Storage under the selected period.
-         */
-        window.saveRoster = function() {
-            const saveButton = document.getElementById('saveRosterButton');
-            const rosterStatus = document.getElementById('rosterStatus');
-            const selectedPeriod = document.getElementById('rosterEditPeriodSelector').value;
-            
-            rosterStatus.textContent = `Saving Period ${selectedPeriod}...`;
-            saveButton.disabled = true;
-
-            const rawRosterText = document.getElementById('rosterInput').value.trim();
-            let newRosterArray = [];
-
-            if (rawRosterText) {
-                const lines = rawRosterText.split('\n');
-                lines.forEach(line => {
-                    const trimmedLine = line.trim();
-                    if (trimmedLine === '') return;
-                    const parts = trimmedLine.split(/\s+/).filter(p => p.length > 0);
-                    
-                    let name, id;
-                    if (parts.length >= 2) {
-                        id = parts.pop(); 
-                        name = parts.join(' '); 
-                    } else if (parts.length === 1) {
-                        name = parts[0];
-                        id = ''; 
-                    } else {
-                        return;
-                    }
-                    newRosterArray.push({ name: name, id: id });
-                });
-            }
-
-            // Update the specific period in the in-memory roster
-            dynamicRoster[selectedPeriod] = newRosterArray;
-            // Save to Local Storage
-            saveRosterToLocal();
-            
-            // Re-render components that rely on the roster
-            // 1. Update autocomplete if this period is selected in the action center
-            const currentActionPeriod = document.querySelector('input[name="currentPeriod"]:checked')?.value;
-            if (currentActionPeriod === selectedPeriod) {
-                updateAutocompleteOptions(dynamicRoster[selectedPeriod]);
-            }
-            // 2. Update the roster display for the current editing view
-            renderRosterDisplay(newRosterArray);
-
-            rosterStatus.textContent = `Period ${selectedPeriod} roster saved successfully!`;
-            
-            // Automatically lock the roster management section after a successful save
-            setTimeout(lockRoster, 1500); 
-
-            setTimeout(() => {
-                rosterStatus.textContent = '';
-                saveButton.disabled = false;
-            }, 3000);
-        }
-
-        // --- Log Management & Utility Functions ---
-
-        // Utility function to format duration from milliseconds
         function formatDuration(ms) {
-            if (ms === null || isNaN(ms)) return 'N/A';
-            const totalSeconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-
-            let parts = [];
-            if (minutes > 0) parts.push(`${minutes}m`);
-            if (seconds > 0 || minutes === 0) parts.push(`${seconds}s`);
-
-            if (parts.length === 0) return '0s';
-            return parts.join(' ');
+            const totalSec = Math.floor(ms / 1000);
+            const m = Math.floor(totalSec / 60);
+            const s = totalSec % 60;
+            return m > 0 ? `${m}m ${s}s` : `${s}s`;
         }
 
-        // Utility function to format time (e.g., 10:30 AM)
-        function formatTime(timestamp) {
-            if (!timestamp) return 'N/A';
-            const date = new Date(timestamp); 
-            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        }
-        
-        /**
-         * Returns today's date in YYYY-MM-DD format.
-         */
-        function getTodayDateString() {
-            return new Date().toISOString().slice(0, 10);
-        }
+        function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
-        /**
-         * Clears all session data, but leaves the roster intact.
-         */
-        window.clearAllSessions = function() {
-            sessions = [];
-            localStorage.removeItem(SESSIONS_KEY);
-            localStorage.setItem(LAST_ACTIVITY_DATE_KEY, getTodayDateString());
-            renderLogs();
-            messageArea.textContent = 'All session logs have been cleared successfully.';
-            setTimeout(() => messageArea.textContent = '', 3000);
-        }
-
-        /**
-         * Checks if the last activity date is different from today and clears the log if so.
-         */
-        function checkAndPerformDailyReset() {
-            const todayDate = getTodayDateString();
-            const lastActivityDate = localStorage.getItem(LAST_ACTIVITY_DATE_KEY);
-
-            if (lastActivityDate && lastActivityDate !== todayDate) {
-                sessions = [];
-                localStorage.removeItem(SESSIONS_KEY);
-                
-                renderLogs();
-                messageArea.textContent = `Welcome! Session log automatically cleared for the new school day (${todayDate}).`;
-                setTimeout(() => messageArea.textContent = '', 5000);
-            }
-
-            localStorage.setItem(LAST_ACTIVITY_DATE_KEY, todayDate);
-        }
-
-        /**
-         * Renders the active and completed logs to the UI.
-         */
         window.renderLogs = function() {
             const activeLog = document.getElementById('activeLogDisplay');
             const completedLog = document.getElementById('completedLogDisplay');
-            const outCount = document.getElementById('outCount');
-            const noActiveMessage = document.getElementById('noActiveMessage');
-            const noCompletedMessage = document.getElementById('noCompletedMessage');
             const exportButton = document.getElementById('exportButton');
-
-            // --- Active Log Rendering (remains visible to students) ---
-            activeLog.innerHTML = '';
             const activeStudents = sessions.filter(s => s.inTime === null);
-            outCount.textContent = activeStudents.length;
-            noActiveMessage.classList.toggle('hidden', activeStudents.length > 0);
+            
+            document.getElementById('outCount').textContent = activeStudents.length;
+            document.getElementById('noActiveMessage').classList.toggle('hidden', activeStudents.length > 0);
+            activeLog.innerHTML = '';
+
+            // Enable export if there are ANY sessions
+            if (exportButton) exportButton.disabled = sessions.length === 0;
 
             activeStudents.forEach(student => {
                 const elapsedMs = Date.now() - student.outTime;
-                const durationText = formatDuration(elapsedMs);
                 const isOverLimit = student.reason === 'Restroom' && elapsedMs > DURATION_LIMIT_MS;
-
-                const element = document.createElement('div');
-                element.id = `active-${student.name.replace(/\s/g, '-')}`;
-                element.className = `status-out p-3 rounded-lg flex justify-between items-center transition duration-150 shadow-sm border border-purple-200 ${isOverLimit ? 'bg-red-100 border-red-500 animate-pulse' : ''}`;
+                const isOffice = student.reason === 'Office Pass';
                 
+                const element = document.createElement('div');
+                element.className = `${isOffice ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border ${isOverLimit ? 'border-red-500 animate-pulse' : 'border-gray-200'}`;
                 element.innerHTML = `
-                    <div class="flex-grow min-w-0 pr-4">
-                        <p class="font-bold text-lg text-gray-800 truncate">${student.name} ${student.id ? `(${student.id})` : ''}</p>
-                        <p class="text-sm text-gray-500 mt-0.5">
-                            <span class="font-semibold text-purple-700">${student.reason}</span> (P${student.period}) out since ${formatTime(student.outTime)}
-                        </p>
+                    <div class="flex-grow pr-4">
+                        <p class="font-bold text-lg text-gray-800">${student.name}</p>
+                        <p class="text-sm text-gray-500"><span class="font-semibold ${isOffice ? 'text-sky-700' : 'text-purple-700'}">${student.reason}</span> (P${student.period}) since ${formatTime(student.outTime)}</p>
                     </div>
-                    <div class="text-right flex-shrink-0">
-                        <p class="font-extrabold text-xl ${isOverLimit ? 'text-red-600' : 'text-purple-600'}">${durationText}</p>
-                        <p class="text-xs text-gray-400">Time Out</p>
-                    </div>
-                `;
+                    <div class="text-right">
+                        <p class="font-extrabold text-xl ${isOverLimit ? 'text-red-600' : (isOffice ? 'text-sky-600' : 'text-purple-600')}">${formatDuration(elapsedMs)}</p>
+                        <p class="text-xs text-gray-400">Duration</p>
+                    </div>`;
                 activeLog.appendChild(element);
             });
 
-            // --- Completed Log Rendering (Now hidden by default, visible when unlocked) ---
             completedLog.innerHTML = '';
-            const completedSessions = sessions.filter(s => s.inTime !== null).reverse(); 
-
-            noCompletedMessage.classList.toggle('hidden', completedSessions.length > 0);
-            exportButton.disabled = sessions.length === 0;
-
-            completedSessions.forEach(session => {
+            const completed = sessions.filter(s => s.inTime !== null).reverse();
+            completed.forEach(s => {
                 const element = document.createElement('div');
-                element.className = 'status-in p-3 rounded-lg shadow-sm border border-green-200';
-                
-                element.innerHTML = `
-                    <p class="font-bold text-gray-800">${session.name} ${session.id ? `(${session.id})` : ''} - <span class="font-semibold text-green-700">${session.reason}</span> (P${session.period})</p>
-                    <p class="text-sm text-gray-500">
-                        Out: ${formatTime(session.outTime)} | 
-                        In: ${formatTime(session.inTime)} | 
-                        Duration: ${formatDuration(session.duration)}
-                    </p>
-                `;
+                element.className = 'status-in p-2 rounded shadow-sm text-xs border border-green-200';
+                element.innerHTML = `<b>${s.name}</b> (${s.reason}) - ${formatDuration(s.duration)}`;
                 completedLog.appendChild(element);
             });
         }
 
-        /**
-         * Toggles the visibility of the active log section.
-         */
-        window.toggleActiveLog = function() {
-            isActiveLogOpen = !isActiveLogOpen;
-            const content = document.getElementById('activeLogContentWrapper');
-            const icon = document.getElementById('dropdownIcon');
-
-            content.classList.toggle('log-open', isActiveLogOpen);
-            content.classList.toggle('log-collapsed', !isActiveLogOpen);
-            icon.classList.toggle('rotate-180', isActiveLogOpen);
-        }
-
-        // --- Core Action Handlers ---
-
-        /**
-         * Handles the sign-out action for a student.
-         */
         window.handleSignOut = function() {
-            const name = studentNameInput.value.trim();
+            const name = document.getElementById('studentNameInput').value.trim();
             const reason = document.querySelector('input[name="exitReason"]:checked')?.value;
             const period = document.querySelector('input[name="currentPeriod"]:checked')?.value; 
 
-            if (!name || !reason || !period) {
-                messageArea.textContent = 'Please enter a name, select a reason, AND select a period.';
-                return;
-            }
-            messageArea.textContent = ''; 
-
-            // 1. Check if student is already out in THIS PERIOD
-            if (sessions.some(s => s.name === name && s.period === period && s.inTime === null)) {
-                messageArea.textContent = `${name} is already signed out for Period ${period}.`;
-                return;
-            }
+            if (!name || !reason || !period) return;
             
-            // 2. Find ID (if available) - check the roster for the selected period
-            const studentRosterEntry = dynamicRoster[period]?.find(s => s.name === name);
-            const studentId = studentRosterEntry ? studentRosterEntry.id : null;
+            // Restroom Limit Logic
+            if (reason === 'Restroom') {
+                const outNow = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
+                if (outNow >= 2) { document.getElementById('messageArea').textContent = 'Wait! Restroom limit (2) reached.'; return; }
+            }
 
-            // 3. Create new session
-            const newSession = {
-                name,
-                id: studentId,
-                reason,
-                period, 
-                outTime: Date.now(),
-                inTime: null,
-                duration: null,
-            };
-
-            sessions.push(newSession);
+            if (sessions.some(s => s.name === name && s.inTime === null)) return;
+            sessions.push({ name, reason, period, outTime: Date.now(), inTime: null });
             saveSessionsToLocal();
-            
-            // 4. Force a page refresh to clear all input fields
-            window.location.reload();
+            window.location.reload(); // Kept as requested
         }
 
-        /**
-         * Handles the sign-in (return) action for a student.
-         */
         window.handleSignIn = function() {
-            const name = studentNameInput.value.trim();
+            const name = document.getElementById('studentNameInput').value.trim();
             const period = document.querySelector('input[name="currentPeriod"]:checked')?.value; 
-
-            if (!name || !period) {
-                messageArea.textContent = 'Please enter the name of the returning student AND select the current period.';
-                return;
-            }
-            messageArea.textContent = ''; 
-
-            // Find the most recent, currently active session for this student in THIS PERIOD
-            const activeSessionIndex = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
-
-            if (activeSessionIndex === -1) {
-                messageArea.textContent = `${name} is not currently signed out in Period ${period}.`;
-                return;
-            }
-
-            // Update the session details
-            const session = sessions[activeSessionIndex];
-            const inTime = Date.now();
-            const duration = inTime - session.outTime;
-
-            session.inTime = inTime;
-            session.duration = duration;
-
-            // 4. Save data to Local Storage
+            const idx = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
+            if (idx === -1) return;
+            sessions[idx].inTime = Date.now();
+            sessions[idx].duration = sessions[idx].inTime - sessions[idx].outTime;
             saveSessionsToLocal();
-            
-            // 5. Force a page refresh to clear all input fields
-            window.location.reload();
+            window.location.reload(); // Kept as requested
         }
 
-        /**
-         * Generates the log content in TXT format, grouped by Period, and triggers a download.
-         */
-        window.downloadLog = function() {
-            // Filter to include only completed sessions for the export
-            let completedSessions = sessions.filter(s => s.inTime !== null);
-
-            if (completedSessions.length === 0) {
-                messageArea.textContent = "No completed sessions to export.";
-                setTimeout(() => messageArea.textContent = '', 3000);
-                return;
+        window.checkPassword = function() {
+            if (document.getElementById('rosterPassword').value === TEACHER_PASSWORD) {
+                document.getElementById('rosterPasswordArea').classList.add('hidden');
+                document.getElementById('rosterConfigContent').classList.remove('hidden');
+                document.getElementById('lockIndicator').textContent = '(Unlocked 🔓)';
+                renderLogs();
             }
-
-            const today = getTodayDateString();
-            
-            // Define fixed-width header for clean TXT output
-            const headerLine = (
-                "Student Name       | Reason    | Time Out | Time In  | Total Time | >10m? | >1 Restroom?\n" +
-                "-------------------|-----------|----------|----------|------------|-------|--------------"
-            );
-            
-            let finalLogContent = `Daily Log - Completed Sessions (${today})\n\n`;
-
-            // Loop through periods 1, 2, 3, 4
-            PERIOD_KEYS.forEach(p => {
-                const periodSessions = completedSessions.filter(s => s.period === p);
-                
-                if (periodSessions.length > 0) {
-                    // Add period label/break (noticeable comment)
-                    finalLogContent += `\n${'#'.repeat(80)}\n`;
-                    finalLogContent += `# LOG FOR PERIOD ${p} (${periodSessions.length} completed sessions)\n`;
-                    finalLogContent += `${'#'.repeat(80)}\n\n`;
-                    finalLogContent += `${headerLine}\n`;
-                    
-                    const logEntries = periodSessions.map(s => {
-                        
-                        // Calculate restroom count from the full 'sessions' list (must match name, period, and reason)
-                        const restroomCountToday = sessions.filter(
-                            session => session.name === s.name &&
-                            session.period === p && 
-                            session.reason === 'Restroom' &&
-                            new Date(session.outTime).toISOString().slice(0, 10) === today
-                        ).length;
-
-                        // Took Longer Than 10 Minutes?
-                        const isOverLimit = s.reason === 'Restroom' && s.duration > DURATION_LIMIT_MS;
-                        const overLimitText = s.reason === 'Restroom' ? (isOverLimit ? 'YES' : 'NO') : 'N/A';
-
-                        // Went to Restroom More Than Once? (This remains the tracking flag)
-                        const wentMoreThanOnceText = s.reason === 'Restroom' ? (restroomCountToday > 1 ? 'YES' : 'NO') : 'N/A';
-                        
-                        // Format times and duration
-                        const outTimeStr = formatTime(s.outTime);
-                        const inTimeStr = formatTime(s.inTime);
-                        const durationStr = formatDuration(s.duration);
-                        
-                        // Apply padding for clean column alignment (padEnd(width, ' '))
-                        return [
-                            s.name.padEnd(18).substring(0, 18), 
-                            s.reason.padEnd(9).substring(0, 9), 
-                            outTimeStr.padEnd(8).substring(0, 8), 
-                            inTimeStr.padEnd(8).substring(0, 8), 
-                            durationStr.padEnd(10).substring(0, 10), 
-                            overLimitText.padEnd(5).substring(0, 5),
-                            wentMoreThanOnceText.padEnd(12).substring(0, 12)
-                        ].join(' | ');
-                    }).join('\n');
-                    
-                    finalLogContent += logEntries + '\n';
-                }
-            });
-
-            // Create a blob and trigger download (TEXT FILE)
-            const blob = new Blob([finalLogContent], { type: 'text/plain;charset=utf-8' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `ClassLog_MultiPeriod_${today}.txt`; 
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            messageArea.textContent = `Log successfully exported as ClassLog_MultiPeriod_${today}.txt`;
-            setTimeout(() => messageArea.textContent = '', 3000);
         }
 
-        // --- Initialization ---
+window.downloadLog = function() {
+    if (sessions.length === 0) return;
+    
+    const today = new Date().toISOString().slice(0, 10);
+    const TEN_MIN_MS = 600000; // 10 minutes in milliseconds
+    
+    // 1. Create the Header
+    let content = `Pass Log - ${today}\n\n`;
+    content += `Name            | Reason     | Period | Time Out | Time In   | Total      | >10 min | 2> times |\n`;
+    content += `-`.repeat(105) + `\n`;
+
+    // 2. Process each session
+    sessions.forEach(s => {
+        // Calculate current duration (handles both active and completed sessions)
+        const durMs = s.inTime ? s.duration : (Date.now() - s.outTime);
+        const inTimeStr = s.inTime ? formatTime(s.inTime) : "STILL OUT";
+        const durStr = formatDuration(durMs);
+        
+        // LOGIC: Over 10 Minutes?
+        // Only checks if the reason is 'Restroom'
+        const isOver10 = (s.reason === 'Restroom' && durMs > TEN_MIN_MS) ? "YES" : "No";
+        
+        // LOGIC: Multiple Restroom Trips?
+        // Counts how many times this specific student went to the Restroom in this specific period
+        const restroomVisitCount = sessions.filter(x => 
+            x.name === s.name && 
+            x.period === s.period && 
+            x.reason === 'Restroom'
+        ).length;
+        const isMultiVisit = (s.reason === 'Restroom' && restroomVisitCount > 1) ? "YES" : "No";
+
+        // 3. Build the Row
+        content += `${s.name.padEnd(15).slice(0,15)} | ` +
+                   `${s.reason.padEnd(10).slice(0,10)} | ` +
+                   `${('P' + s.period).padEnd(6)} | ` +
+                   `${formatTime(s.outTime).padEnd(8)} | ` +
+                   `${inTimeStr.padEnd(9)} | ` +
+                   `${durStr.padEnd(10)} | ` +
+                   `${isOver10.padEnd(7)} | ` +
+                   `${isMultiVisit}\n`;
+    });
+
+    // 4. Trigger Download
+    const blob = new Blob([content], { type: 'text/plain' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `ClassLog_${today}.txt`;
+    
+    // Add to document so the browser definitely recognizes the click
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    // Optional: Show a success message
+    if (document.getElementById('messageArea')) {
+        document.getElementById('messageArea').textContent = "Log downloaded successfully.";
+        setTimeout(() => document.getElementById('messageArea').textContent = '', 3000);
+    }
+}
+
+        window.saveRoster = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const raw = document.getElementById('rosterInput').value.trim();
+            dynamicRoster[p] = raw.split('\n').map(l => ({ name: l.trim() }));
+            localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
+            loadRosterForEditing();
+            updateAutocompleteByPeriod();
+        }
+
+        window.loadRosterForEditing = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const r = dynamicRoster[p] || [];
+            document.getElementById('rosterInput').value = r.map(s => s.name).join('\n');
+        }
+
+        window.updateAutocompleteByPeriod = function() {
+            const p = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            const datalist = document.getElementById('studentNames');
+            datalist.innerHTML = (dynamicRoster[p] || []).map(s => `<option value="${s.name}">`).join('');
+        }
+
+        window.clearAllSessions = function() {
+            if(confirm("Clear all session logs?")) { sessions = []; saveSessionsToLocal(); renderLogs(); }
+        }
+
         window.onload = function() {
-            // 1. Run the daily reset check first
-            checkAndPerformDailyReset();
-            // 2. Then load the (potentially cleared) data
             loadLocalData();
-            
-            // 3. Ensure one radio button is checked by default
             document.getElementById('period1').checked = true;
             document.getElementById('reasonRestroom').checked = true;
-            
-            // 4. Set initial autocomplete based on default period (P1)
-            updateAutocompleteByPeriod(); 
-
-            // 5. Add event listener to period radio buttons to update autocomplete on change
-            const periodRadios = document.querySelectorAll('input[name="currentPeriod"]');
-            periodRadios.forEach(radio => {
-                radio.addEventListener('change', updateAutocompleteByPeriod);
-            });
-            
-            // 6. Set a global interval to ensure the active log duration updates every second.
+            updateAutocompleteByPeriod();
+            document.querySelectorAll('input[name="currentPeriod"]').forEach(r => r.addEventListener('change', updateAutocompleteByPeriod));
             setInterval(renderLogs, 1000);
         }
     </script>
 </body>
 </html>
 
-<!-- Check 1 -->
+<!-- update 2 -->
