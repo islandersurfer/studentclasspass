@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classroom Pass Tracker (Local)</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
         body {
@@ -234,7 +238,7 @@
                 renderLogs();
             }
         }
-
+///////////////////////////////////////////////////        Download Logs    ///////////////////////////////////////////////////////////////////////////
 window.downloadLog = function() {
     if (sessions.length === 0) return;
     
@@ -282,6 +286,23 @@ window.downloadLog = function() {
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `ClassLog_${today}.txt`;
+
+    //////////////////////////   QR Code Logs    ///////////////////////////////////////
+    // 3. Clear old QR code and generate new one
+    const qrContainer = document.getElementById("qrcode");
+    qrContainer.innerHTML = ""; // Clear previous
+    
+    new QRCode(qrContainer, {
+        text: content,
+        width: 256,
+        height: 256,
+        correctLevel : QRCode.CorrectLevel.L // Low error correction = fits more text
+    });
+
+    // 4. Show the Modal
+    document.getElementById('qrModal').classList.remove('hidden');
+
+    ////////////////////////////////////////////////////////////////////
     
     // Add to document so the browser definitely recognizes the click
     document.body.appendChild(link);
@@ -294,6 +315,57 @@ window.downloadLog = function() {
         setTimeout(() => document.getElementById('messageArea').textContent = '', 3000);
     }
 }
+
+////////////////////////////////////////////////////////     Attempt to use google sheets   ////////////////////////////////////////////////////////////////////////////////////////////////
+// window.downloadLog = async function() {
+//     if (sessions.length === 0) return;
+
+//     // 1. YOUR GOOGLE WEB APP URL GOES HERE
+//     const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOuF6JPTrM28rYXe5AvjxNNh4AqWTfRD9tcM7i_xgt7tYNqjpznWQJLqGNLGAzBx-d/exec";
+
+//     const TEN_MIN_MS = 600000;
+//     const messageArea = document.getElementById('messageArea');
+//     messageArea.textContent = "Syncing to Cloud... ☁️";
+
+//     // 2. Prepare the data for the Sheet
+//     const dataToSync = sessions.map(s => {
+//         const durMs = s.inTime ? s.duration : (Date.now() - s.outTime);
+//         const restroomVisitCount = sessions.filter(x => x.name === s.name && x.period === s.period && x.reason === 'Restroom').length;
+
+//         return {
+//             name: s.name,
+//             reason: s.reason,
+//             period: s.period,
+//             outTimeFormatted: formatTime(s.outTime),
+//             inTimeFormatted: s.inTime ? formatTime(s.inTime) : "STILL OUT",
+//             duration: formatDuration(durMs),
+//             isOver10: (s.reason === 'Restroom' && durMs > TEN_MIN_MS) ? "YES" : "No",
+//             isMultiVisit: (s.reason === 'Restroom' && restroomVisitCount > 1) ? "YES" : "No"
+//         };
+//     });
+
+//     // 3. Send the data
+//     // 3. Send the data
+//     try {
+//         await fetch(GOOGLE_SCRIPT_URL, {
+//             method: 'POST',
+//             mode: 'no-cors', 
+//             // We use 'text/plain' to avoid CORS pre-flight checks 
+//             // Google Script will still find the JSON in e.postData.contents
+//             headers: { 'Content-Type': 'text/plain' }, 
+//             body: JSON.stringify(dataToSync)
+//         });
+
+//         messageArea.textContent = "Success! View logs on your Google Sheet.";
+//         setTimeout(() => messageArea.textContent = '', 5000);
+//     } catch (error) {
+//         console.error("Fetch Error:", error);
+//         messageArea.textContent = "Error syncing to Cloud.";
+//     }
+// }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
         window.saveRoster = function() {
             const p = document.getElementById('rosterEditPeriodSelector').value;
@@ -329,7 +401,27 @@ window.downloadLog = function() {
             setInterval(renderLogs, 1000);
         }
     </script>
+
+
+<!--     QR code Display    -->
+
+<div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
+        <h2 class="text-xl font-bold mb-4">Scan Log to Phone</h2>
+        <div id="qrcode" class="flex justify-center mb-4"></div>
+        <p class="text-sm text-gray-600 mb-4">Scan this with your phone camera to open the text log.</p>
+        <button onclick="document.getElementById('qrModal').classList.add('hidden')" 
+                class="bg-blue-600 text-white px-4 py-2 rounded font-bold w-full">Close</button>
+    </div>
+</div>
+<!--  Display  -->
+
+
+
+
+
+
 </body>
 </html>
 
-<!-- update 3 -->
+<!-- updated to have qr code -->
