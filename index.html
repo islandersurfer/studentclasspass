@@ -135,6 +135,45 @@
         const LAST_ACTIVITY_DATE_KEY = 'lastActivityDate'; 
         let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
         let sessions = []; 
+
+        ///////////////////// Hard coded Roster /////////////////////////////////////////
+        // === NEW: HARDCODED ROSTER DATA ===
+        // You can edit the names in these lists for each period.
+        // const HARDCODED_ROSTER = {
+        //     '1': ["Alice Johnson", "Bob Smith", "Charlie Davis"],
+        //     '2': ["David Evans", "Eve Franklin"],
+        //     '3': ["Frank George", "Grace Hill", "Henry Irving"],
+        //     '4': ["Jane Doe", "John Smith"]
+        // };
+
+        // // If the browser doesn't have a saved roster, load the hardcoded names above.
+        // if (!localStorage.getItem(ROSTER_KEY)) {
+        //     for (const p in HARDCODED_ROSTER) {
+        //         dynamicRoster[p] = HARDCODED_ROSTER[p].map(name => ({ name: name.trim() }));
+        //     }
+        // }
+        // ==================================
+
+        // This loop merges the lists together
+        // for (const p in HARDCODED_ROSTER) {
+        //     // Get a list of names currently in the browser for this period
+        //     const browserNames = (dynamicRoster[p] || []).map(item => item.name);
+
+        //     HARDCODED_ROSTER[p].forEach(newName => {
+        //         const trimmed = newName.trim();
+        //         // Only add the name if it's not already in the browser's list
+        //         if (!browserNames.includes(trimmed)) {
+        //             if (!dynamicRoster[p]) dynamicRoster[p] = [];
+        //             dynamicRoster[p].push({ name: trimmed });
+        //         }
+        //     });
+        // }
+        // ================================================
+
+
+        ////////////////////////////////////////////////////////////////////////////////
+
+
         const TEACHER_PASSWORD = "CHSteacher"; 
         const DURATION_LIMIT_MS = 600000; 
 
@@ -145,6 +184,86 @@
             sessions = savedSessions ? JSON.parse(savedSessions) : [];
             renderLogs();
             loadRosterForEditing(); 
+
+
+            //////////////////=======================================================================/////////////////////////////
+            
+            // === UPDATED: MERGE HARDCODED + BROWSER ROSTERS ===
+            const HARDCODED_ROSTER_LIST = {
+                '1': ["Angelina Albano",
+                        "Mia Barker",
+                        "Oscar Bona",
+                        "Austin Brown",
+                        "Sean Bryant",
+                        "Henry Dunlevy",
+                        "Breck Dun",
+                        "Diego Fernandez",
+                        "William Foster",
+                        "Mason Gibbs",
+                        "Griffin Hart",
+                        "Becket Herr",
+                        "Brianna Hoak",
+                        "Pablo Lavalle",
+                        "Luke Litchy",
+                        "Abril Macias Meza",
+                        "Francisco Maldonado",
+                        "Nicolas Martinez",
+                        "Grace Messner",
+                        "Khalia Moore",
+                        "Sullivan Munn",
+                        "Ariadne Munoz",
+                        "Camil Nacif Valle",
+                        "Huitzil Pedregon",
+                        "Bennett Perry",
+                        "Russell Richardson",
+                        "Mary Smith",
+                        "Finn Wahamaki",
+                        "Brock Weaver",],
+                '2': ["David"],
+                '3': ["Maria Anaya",
+                        "Aidan Arendt",
+                        "Brody Cannon",
+                        "Chase Carstens",
+                        "Logan Craig",
+                        "Carly DeVore",
+                        "Leo DiGrazia",
+                        "Sydney Dunn",
+                        "Jose Fer Esquer",
+                        "Gehrig Evans",
+                        "Sophia Gresham",
+                        "Trenten Heidbreder",
+                        "Savannah McCauley",
+                        "Sonali Menghani",
+                        "Griffin Morton",
+                        "Aniella Orgill",
+                        "Calvin Park",
+                        "Gerardo GerBear Peralta",
+                        "Jaxton Wesley Preston",
+                        "Spencer Reidarson",
+                        "Ethan Reynolds",
+                        "Baxter Quint Richardson",
+                        "Carlie Ryan",
+                        "Riley Schaedler",
+                        "Downtown Justo Carranza",
+                        "Kesler Tillner",
+                        "Cedrick Randall Tolentino",
+                        "Maria Vizcarra Medina",
+                        "Jamesyn Wright"],
+                '4': ["Jane Doe", "John Smith"]
+            };
+
+            for (const p in HARDCODED_ROSTER_LIST) {
+                const browserNames = (dynamicRoster[p] || []).map(item => item.name);
+                HARDCODED_ROSTER_LIST[p].forEach(newName => {
+                    const trimmed = newName.trim();
+                    if (!browserNames.includes(trimmed)) {
+                        if (!dynamicRoster[p]) dynamicRoster[p] = [];
+                        dynamicRoster[p].push({ name: trimmed });
+                    }
+                });
+            }
+      
+        // =======================================================================================================================////////////////
         }
 
         function saveSessionsToLocal() { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); }
@@ -287,7 +406,9 @@ window.downloadLog = function() {
     link.href = URL.createObjectURL(blob);
     link.download = `ClassLog_${today}.txt`;
 
-    //////////////////////////   QR Code Logs    ///////////////////////////////////////
+
+
+    //////////////////////////   QR Code Logs    ////////////////////////////////////////////////////////////////////////////////////////////
     // 3. Clear old QR code and generate new one
     const qrContainer = document.getElementById("qrcode");
     qrContainer.innerHTML = ""; // Clear previous
@@ -302,7 +423,10 @@ window.downloadLog = function() {
     // 4. Show the Modal
     document.getElementById('qrModal').classList.remove('hidden');
 
-    ////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
     
     // Add to document so the browser definitely recognizes the click
     document.body.appendChild(link);
@@ -424,4 +548,4 @@ window.downloadLog = function() {
 </body>
 </html>
 
-<!-- updated to have qr code -->
+<!-- updated  autocomplete form hardcode or browser roster-->
