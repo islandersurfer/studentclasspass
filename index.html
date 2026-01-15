@@ -1,3 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Pass Tracker (Local Data)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .status-out { background-color: #fff1ff; border-left: 4px solid #c084fc; }
+        .status-office { background-color: #e0f2fe; border-left: 4px solid #38bdf8; }
+        .status-in { background-color: #d1fae5; border-left: 4px solid #10b981; }
+        .log-open { max-height: 500px; opacity: 1; visibility: visible; }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Student Pass Tracker</h1>
+            <p class="text-gray-500 mt-2">All data is saved locally in this browser.</p>
+        </header>
+        
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+            <h2 class="text-xl font-bold mb-4 text-gray-700">Action Center</h2>
+
+            <div class="mb-4 p-3 border border-indigo-200 rounded-lg bg-indigo-50">
+                <label class="text-sm font-semibold text-gray-700 block mb-2">Current Period:</label>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-6" id="periodSelection">
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="1" id="period1" checked class="h-5 w-5"><span class="ml-2">Period 1</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="2" class="h-5 w-5"><span class="ml-2">Period 2</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="3" class="h-5 w-5"><span class="ml-2">Period 3</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="4" class="h-5 w-5"><span class="ml-2">Period 4</span></label>
+                </div>
+            </div>
+
+            <div class="mb-4 p-3 border border-indigo-200 rounded-lg bg-indigo-50">
+                <label class="text-sm font-semibold text-gray-700 block mb-2">Reason for Exit:</label>
+                <div class="flex flex-col sm:flex-row gap-3 sm:gap-6">
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="exitReason" value="Restroom" id="reasonRestroom" checked class="h-5 w-5"><span class="ml-2">Restroom 🚽</span></label>
+                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="exitReason" value="Office Pass" class="h-5 w-5"><span class="ml-2">Office Pass 📋</span></label>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <input type="text" id="studentNameInput" placeholder="Enter ID" autocomplete="off" class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <datalist id="studentNames"></datalist>
+                <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md">Going Out 🏃</button>
+                <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md">Returning ✅</button>
+            </div>
+            <p id="messageArea" class="mt-3 text-sm text-center text-red-600 font-medium"></p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">
+                <h2 class="text-xl font-bold text-indigo-700 border-b border-indigo-100 pb-2">Students Currently Out <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span></h2>
+                <div id="activeLogContentWrapper" class="pt-4">
+                    <p class="text-gray-400 italic mb-3" id="noActiveMessage">No students currently signed out.</p>
+                    <div id="activeLogDisplay" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1">
+                <div id="rosterConfigContainer" class="bg-white rounded-xl shadow-lg border border-gray-200">
+                    <div class="p-4 bg-gray-100 rounded-t-xl"><h3 class="font-semibold text-gray-700 text-xl">Teacher Control <span id="lockIndicator" class="text-red-500 text-sm ml-2">(Locked 🔒)</span></h3></div>
+                    
+                    <div id="rosterPasswordArea" class="p-4 border-b border-gray-200">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Teacher Password:</label>
+                        <div class="flex gap-2">
+                            <input type="password" id="rosterPassword" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm">
+                            <button onclick="checkPassword()" class="bg-green-500 text-white px-4 rounded-lg text-sm">Unlock</button>
+                        </div>
+                    </div>
+
+                    <div id="rosterConfigContent" class="p-4 hidden">
+                         <div class="mb-4">
+                            <select id="rosterEditPeriodSelector" onchange="loadRosterForEditing()" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="1">Period 1 Roster</option>
+                                <option value="2">Period 2 Roster</option>
+                                <option value="3">Period 3 Roster</option>
+                                <option value="4">Period 4 Roster</option>
+                            </select>
+                        </div>
+                        <textarea id="rosterInput" rows="5" placeholder="Add names here (one per line)" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono"></textarea>
+                        <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white py-2 rounded-lg text-sm w-full">Save Roster</button>
+                        
+                        <div class="mt-6 pt-4 border-t">
+                            <p class="font-semibold text-gray-700 mb-2">Today's History:</p>
+                            <div id="completedLogDisplay" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+                            <div class="mt-4 flex justify-between gap-2">
+                                <button onclick="clearAllSessions()" class="text-red-600 text-xs hover:underline">Clear Logs</button>
+                                <button onclick="downloadLog()" id="exportButton" class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded border">Export Log & QR 💾</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Scan Log to Phone</h2>
+            <div id="qrcode" class="flex justify-center mb-4"></div>
+            <p class="text-sm text-gray-600 mb-4">Scan this with your phone camera to take the log with you.</p>
+            <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold w-full">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // === DATA STRUCTURES ===
+        const ROSTER_KEY = 'classRoster';
+        const SESSIONS_KEY = 'classSessions';
+        const TEACHER_PASSWORD = "CHSteacher";
+        let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
+        let sessions = []; 
+
+        // === HARDCODED ROSTER ===
+        const HARDCODED_ROSTER_LIST = {
+            '1': [
+                { id: "12345", name: "Al Joke" },
+                { id: "101", name: "Angelina Albano" },
+                { id: "102", name: "Mia Barker" },
+                { id: "103", name: "Oscar Bona" }
+            ],
+            '2': [
+                { id: "11111", name: "Al Joke" },
+                { id: "12345", name: "Alice Johnson" }
+            ],
+            '3': [
+                { id: "301", name: "Maria Anaya" },
+                { id: "302", name: "Aidan Arendt" }
+            ],
+            '4': [
+                { id: "401", name: "Jane Doe" }
+            ]
+        };
+
+        // === LOAD DATA ===
+        function loadLocalData() {
+            const savedRoster = localStorage.getItem(ROSTER_KEY);
+            if (savedRoster) dynamicRoster = JSON.parse(savedRoster);
+            
+            const savedSessions = localStorage.getItem(SESSIONS_KEY);
+            sessions = savedSessions ? JSON.parse(savedSessions) : [];
+            
+            renderLogs();
+            loadRosterForEditing();
+        }
+
+        // === ID TRANSLATOR LOGIC ===
+        // function translateIDToName(inputElement) {
+        //     const val = inputElement.value.trim();
+        //     const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            
+        //     // Search hardcoded list for ID match
+        //     const student = HARDCODED_ROSTER_LIST[period]?.find(s => String(s.id) === val);
+        //     if (student) {
+        //         inputElement.value = student.name;
+        //         inputElement.style.backgroundColor = "#ecfdf5";
+        //         setTimeout(() => inputElement.style.backgroundColor = "", 500);
+        //         return student.name;
+        //     }
+        //     return val;
+        // }
+
+        function translateIDToName(input) {
+            const val = input.value.trim();
+            // Use an empty string if val is empty
+            if (!val) return ""; 
+
+            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            
+            // Search the roster: convert both to strings and trim to ensure a perfect match
+            const student = (dynamicRoster[period] || []).find(s => String(s.id).trim() === String(val));
+            
+            if (student) {
+                input.value = student.name;
+                // Visual flash to show it worked
+                input.style.backgroundColor = "#d1fae5"; 
+                setTimeout(() => input.style.backgroundColor = "", 400);
+                return student.name;
+            }
+            return val;
+        }
+
+        document.getElementById('studentNameInput').addEventListener('input', function(e) {
+            translateIDToName(e.target);
+        });
+
+        // === ACTION HANDLERS ===
+        window.handleSignOut = function() {
+            const input = document.getElementById('studentNameInput');
+            const name = input.value.trim();
+            const reason = document.querySelector('input[name="exitReason"]:checked')?.value;
+            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value;
+
+            if (!name || !reason || !period) return;
+
+            // Restroom Limit Logic
+            if (reason === 'Restroom') {
+                const outNow = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
+                if (outNow >= 2) { 
+                    document.getElementById('messageArea').textContent = 'Wait! Restroom limit (2) reached.'; 
+                    return; 
+                }
+            }
+
+            if (sessions.some(s => s.name === name && s.inTime === null)) return;
+            
+            sessions.push({ name, reason, period, outTime: Date.now(), inTime: null });
+            saveSessionsToLocal();
+            input.value = "";
+            renderLogs();
+        }
+
+        window.handleSignIn = function() {
+            const input = document.getElementById('studentNameInput');
+            const name = translateIDToName(input); // One last check for ID translation
+            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value;
+
+            const idx = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
+            if (idx === -1) {
+                document.getElementById('messageArea').textContent = "Student not found in 'Out' list.";
+                return;
+            }
+
+            sessions[idx].inTime = Date.now();
+            sessions[idx].duration = sessions[idx].inTime - sessions[idx].outTime;
+            saveSessionsToLocal();
+            input.value = "";
+            document.getElementById('messageArea').textContent = "";
+            renderLogs();
+        }
+
+        // === TEACHER CONTROL FUNCTIONS ===
+        window.checkPassword = function() {
+            if (document.getElementById('rosterPassword').value === TEACHER_PASSWORD) {
+                document.getElementById('rosterPasswordArea').classList.add('hidden');
+                document.getElementById('rosterConfigContent').classList.remove('hidden');
+                document.getElementById('lockIndicator').textContent = '(Unlocked 🔓)';
+                document.getElementById('lockIndicator').classList.replace('text-red-500', 'text-green-500');
+            }
+        }
+
+        // window.saveRoster = function() {
+        //     const p = document.getElementById('rosterEditPeriodSelector').value;
+        //     const raw = document.getElementById('rosterInput').value.trim();
+        //     dynamicRoster[p] = raw.split('\n').filter(l => l.trim() !== "").map(l => ({ name: l.trim() }));
+        //     localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
+        //     updateAutocompleteByPeriod();
+        //     alert("Roster saved!");
+        // }
+
+        ////////////////////////////////////
+        window.saveRoster = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const raw = document.getElementById('rosterInput').value.trim();
+            
+            // This now splits the line by the comma to store both ID and Name
+            dynamicRoster[p] = raw.split('\n').filter(line => line.includes(',')).map(line => {
+                const [id, name] = line.split(',');
+                return { id: id.trim(), name: name.trim() };
+            });
+            
+            localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
+            alert("Roster for Period " + p + " saved!");
+        }
+
+        ///////////////////////////////////
+
+        // window.loadRosterForEditing = function() {
+        //     const p = document.getElementById('rosterEditPeriodSelector').value;
+        //     const r = dynamicRoster[p] || [];
+        //     document.getElementById('rosterInput').value = r.map(s => s.name).join('\n');
+        // }
+        /////////////////////////////////
+        window.loadRosterForEditing = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const r = dynamicRoster[p] || [];
+            // This ensures that when the teacher opens the panel, it shows "ID, Name"
+            document.getElementById('rosterInput').value = r.map(s => `${s.id}, ${s.name}`).join('\n');
+        }
+        ///////////////////////////////////
+        function translateIDToName(input) {
+            const val = input.value.trim();
+            if (!val) return ""; 
+
+            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            
+            // This searches BOTH the Teacher Roster and the Hardcoded list
+            const teacherList = dynamicRoster[period] || [];
+            const hardcodedList = HARDCODED_ROSTER_LIST[period] || [];
+            const combinedList = [...teacherList, ...hardcodedList];
+
+            // Search logic: matches ID regardless of spaces or type
+            const student = combinedList.find(s => String(s.id).trim() === String(val));
+            
+            if (student) {
+                input.value = student.name;
+                // Visual flash
+                input.style.backgroundColor = "#d1fae5"; 
+                setTimeout(() => input.style.backgroundColor = "", 400);
+                return student.name;
+            }
+            return val;
+        }
+
+        ///////////////////////
+        window.updateAutocompleteByPeriod = function() {
+            const p = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            const datalist = document.getElementById('studentNames');
+            // Merge dynamic names with hardcoded names for the suggestion list
+            const hardNames = (HARDCODED_ROSTER_LIST[p] || []).map(s => s.name);
+            const dynNames = (dynamicRoster[p] || []).map(s => s.name);
+            const allNames = [...new Set([...hardNames, ...dynNames])];
+            
+            datalist.innerHTML = allNames.map(name => `<option value="${name}">`).join('');
+        }
+
+        // === EXPORT & QR LOGIC ===
+        window.downloadLog = function() {
+            if (sessions.length === 0) return;
+            
+            let content = `Pass Log - ${new Date().toLocaleDateString()}\n`;
+            content += `Name | Reason | Period | Time Out | Time In | Total\n`;
+            content += `-`.repeat(60) + `\n`;
+
+            sessions.forEach(s => {
+                const inTimeStr = s.inTime ? formatTime(s.inTime) : "STILL OUT";
+                const durStr = s.inTime ? formatDuration(s.duration) : "---";
+                content += `${s.name} | ${s.reason} | P${s.period} | ${formatTime(s.outTime)} | ${inTimeStr} | ${durStr}\n`;
+            });
+
+            // Show QR
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, { text: content, width: 200, height: 200 });
+            document.getElementById('qrModal').classList.remove('hidden');
+
+            // Download File
+            const blob = new Blob([content], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `ClassLog_${new Date().toISOString().slice(0,10)}.txt`;
+            link.click();
+        }
+
+        // === HELPERS ===
+        function saveSessionsToLocal() { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); }
+        function formatDuration(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${m}m ${s}s`;
+        }
+        function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+        window.renderLogs = function() {
+            const activeLog = document.getElementById('activeLogDisplay');
+            const completedLog = document.getElementById('completedLogDisplay');
+            const activeStudents = sessions.filter(s => s.inTime === null);
+            
+            document.getElementById('outCount').textContent = activeStudents.length;
+            document.getElementById('noActiveMessage').classList.toggle('hidden', activeStudents.length > 0);
+            activeLog.innerHTML = '';
+
+            activeStudents.forEach(student => {
+                const element = document.createElement('div');
+                element.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200`;
+                element.innerHTML = `
+                    <div><p class="font-bold text-gray-800">${student.name}</p>
+                    <p class="text-xs text-gray-500">${student.reason} (P${student.period}) since ${formatTime(student.outTime)}</p></div>
+                    <div class="text-right"><p class="font-extrabold text-indigo-600">${formatDuration(Date.now() - student.outTime)}</p></div>`;
+                activeLog.appendChild(element);
+            });
+
+            completedLog.innerHTML = '';
+            sessions.filter(s => s.inTime !== null).reverse().slice(0, 10).forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'status-in p-2 rounded text-xs border border-green-200';
+                div.innerHTML = `<b>${s.name}</b> (${s.reason}) - ${formatDuration(s.duration)}`;
+                completedLog.appendChild(div);
+            });
+        }
+
+        window.clearAllSessions = function() {
+            if(confirm("Clear all logs?")) { sessions = []; saveSessionsToLocal(); renderLogs(); }
+        }
+
+        window.onload = function() {
+            loadLocalData();
+            updateAutocompleteByPeriod();
+            document.querySelectorAll('input[name="currentPeriod"]').forEach(r => r.addEventListener('change', updateAutocompleteByPeriod));
+            setInterval(renderLogs, 1000);
+
+            //////////////////////////
+            // Find the input box and tell it to run the translator every time the user types
+            document.getElementById('studentNameInput').addEventListener('input', function(e) {
+                translateIDToName(e.target);
+            });
+            /////////////////////////
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 <!-- <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -228,385 +668,3 @@
 
 
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Classroom Pass Tracker (Local Data)</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
-        .status-out { background-color: #fff1ff; border-left: 4px solid #c084fc; }
-        .status-office { background-color: #e0f2fe; border-left: 4px solid #38bdf8; }
-        .status-in { background-color: #d1fae5; border-left: 4px solid #10b981; }
-        .log-open { max-height: 500px; opacity: 1; visibility: visible; }
-    </style>
-</head>
-<body class="min-h-screen p-4 md:p-8">
-
-    <div class="max-w-4xl mx-auto">
-        <header class="text-center mb-6">
-            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Student Pass Tracker</h1>
-            <p class="text-gray-500 mt-2">All data is saved locally in this browser.</p>
-        </header>
-        
-        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
-            <h2 class="text-xl font-bold mb-4 text-gray-700">Action Center</h2>
-
-            <div class="mb-4 p-3 border border-indigo-200 rounded-lg bg-indigo-50">
-                <label class="text-sm font-semibold text-gray-700 block mb-2">Current Period:</label>
-                <div class="flex flex-col sm:flex-row gap-3 sm:gap-6" id="periodSelection">
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="1" id="period1" checked class="h-5 w-5"><span class="ml-2">Period 1</span></label>
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="2" class="h-5 w-5"><span class="ml-2">Period 2</span></label>
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="3" class="h-5 w-5"><span class="ml-2">Period 3</span></label>
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="currentPeriod" value="4" class="h-5 w-5"><span class="ml-2">Period 4</span></label>
-                </div>
-            </div>
-
-            <div class="mb-4 p-3 border border-indigo-200 rounded-lg bg-indigo-50">
-                <label class="text-sm font-semibold text-gray-700 block mb-2">Reason for Exit:</label>
-                <div class="flex flex-col sm:flex-row gap-3 sm:gap-6">
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="exitReason" value="Restroom" id="reasonRestroom" checked class="h-5 w-5"><span class="ml-2">Restroom 🚽</span></label>
-                    <label class="inline-flex items-center cursor-pointer"><input type="radio" name="exitReason" value="Office Pass" class="h-5 w-5"><span class="ml-2">Office Pass 📋</span></label>
-                </div>
-            </div>
-
-            <div class="flex flex-col md:flex-row gap-4 mb-4">
-                <input type="text" id="studentNameInput" placeholder="Enter ID" autocomplete="off" class="flex-grow p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                <datalist id="studentNames"></datalist>
-                <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md">Going Out 🏃</button>
-                <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md">Returning ✅</button>
-            </div>
-            <p id="messageArea" class="mt-3 text-sm text-center text-red-600 font-medium"></p>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
-            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">
-                <h2 class="text-xl font-bold text-indigo-700 border-b border-indigo-100 pb-2">Students Currently Out <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span></h2>
-                <div id="activeLogContentWrapper" class="pt-4">
-                    <p class="text-gray-400 italic mb-3" id="noActiveMessage">No students currently signed out.</p>
-                    <div id="activeLogDisplay" class="space-y-3"></div>
-                </div>
-            </div>
-
-            <div class="lg:col-span-1">
-                <div id="rosterConfigContainer" class="bg-white rounded-xl shadow-lg border border-gray-200">
-                    <div class="p-4 bg-gray-100 rounded-t-xl"><h3 class="font-semibold text-gray-700 text-xl">Teacher Control <span id="lockIndicator" class="text-red-500 text-sm ml-2">(Locked 🔒)</span></h3></div>
-                    
-                    <div id="rosterPasswordArea" class="p-4 border-b border-gray-200">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Teacher Password:</label>
-                        <div class="flex gap-2">
-                            <input type="password" id="rosterPassword" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm">
-                            <button onclick="checkPassword()" class="bg-green-500 text-white px-4 rounded-lg text-sm">Unlock</button>
-                        </div>
-                    </div>
-
-                    <div id="rosterConfigContent" class="p-4 hidden">
-                         <div class="mb-4">
-                            <select id="rosterEditPeriodSelector" onchange="loadRosterForEditing()" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
-                                <option value="1">Period 1 Roster</option>
-                                <option value="2">Period 2 Roster</option>
-                                <option value="3">Period 3 Roster</option>
-                                <option value="4">Period 4 Roster</option>
-                            </select>
-                        </div>
-                        <textarea id="rosterInput" rows="5" placeholder="Add names here (one per line)" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono"></textarea>
-                        <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white py-2 rounded-lg text-sm w-full">Save Roster</button>
-                        
-                        <div class="mt-6 pt-4 border-t">
-                            <p class="font-semibold text-gray-700 mb-2">Today's History:</p>
-                            <div id="completedLogDisplay" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
-                            <div class="mt-4 flex justify-between gap-2">
-                                <button onclick="clearAllSessions()" class="text-red-600 text-xs hover:underline">Clear Logs</button>
-                                <button onclick="downloadLog()" id="exportButton" class="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded border">Export Log & QR 💾</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Scan Log to Phone</h2>
-            <div id="qrcode" class="flex justify-center mb-4"></div>
-            <p class="text-sm text-gray-600 mb-4">Scan this with your phone camera to take the log with you.</p>
-            <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold w-full">Close</button>
-        </div>
-    </div>
-
-    <script>
-        // === DATA STRUCTURES ===
-        const ROSTER_KEY = 'classRoster';
-        const SESSIONS_KEY = 'classSessions';
-        const TEACHER_PASSWORD = "CHSteacher";
-        let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
-        let sessions = []; 
-
-        // === HARDCODED ROSTER ===
-        const HARDCODED_ROSTER_LIST = {
-            '1': [
-                { id: "12345", name: "Al Joke" },
-                { id: "101", name: "Angelina Albano" },
-                { id: "102", name: "Mia Barker" },
-                { id: "103", name: "Oscar Bona" }
-            ],
-            '2': [
-                { id: "11111", name: "Al Joke" },
-                { id: "12345", name: "Alice Johnson" }
-            ],
-            '3': [
-                { id: "301", name: "Maria Anaya" },
-                { id: "302", name: "Aidan Arendt" }
-            ],
-            '4': [
-                { id: "401", name: "Jane Doe" }
-            ]
-        };
-
-        // === LOAD DATA ===
-        function loadLocalData() {
-            const savedRoster = localStorage.getItem(ROSTER_KEY);
-            if (savedRoster) dynamicRoster = JSON.parse(savedRoster);
-            
-            const savedSessions = localStorage.getItem(SESSIONS_KEY);
-            sessions = savedSessions ? JSON.parse(savedSessions) : [];
-            
-            renderLogs();
-            loadRosterForEditing();
-        }
-
-        // === ID TRANSLATOR LOGIC ===
-        function translateIDToName(inputElement) {
-            const val = inputElement.value.trim();
-            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
-            
-            // Search hardcoded list for ID match
-            const student = HARDCODED_ROSTER_LIST[period]?.find(s => String(s.id) === val);
-            if (student) {
-                inputElement.value = student.name;
-                inputElement.style.backgroundColor = "#ecfdf5";
-                setTimeout(() => inputElement.style.backgroundColor = "", 500);
-                return student.name;
-            }
-            return val;
-        }
-
-        document.getElementById('studentNameInput').addEventListener('input', function(e) {
-            translateIDToName(e.target);
-        });
-
-        // === ACTION HANDLERS ===
-        window.handleSignOut = function() {
-            const input = document.getElementById('studentNameInput');
-            const name = input.value.trim();
-            const reason = document.querySelector('input[name="exitReason"]:checked')?.value;
-            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value;
-
-            if (!name || !reason || !period) return;
-
-            // Restroom Limit Logic
-            if (reason === 'Restroom') {
-                const outNow = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
-                if (outNow >= 2) { 
-                    document.getElementById('messageArea').textContent = 'Wait! Restroom limit (2) reached.'; 
-                    return; 
-                }
-            }
-
-            if (sessions.some(s => s.name === name && s.inTime === null)) return;
-            
-            sessions.push({ name, reason, period, outTime: Date.now(), inTime: null });
-            saveSessionsToLocal();
-            input.value = "";
-            renderLogs();
-        }
-
-        window.handleSignIn = function() {
-            const input = document.getElementById('studentNameInput');
-            const name = translateIDToName(input); // One last check for ID translation
-            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value;
-
-            const idx = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
-            if (idx === -1) {
-                document.getElementById('messageArea').textContent = "Student not found in 'Out' list.";
-                return;
-            }
-
-            sessions[idx].inTime = Date.now();
-            sessions[idx].duration = sessions[idx].inTime - sessions[idx].outTime;
-            saveSessionsToLocal();
-            input.value = "";
-            document.getElementById('messageArea').textContent = "";
-            renderLogs();
-        }
-
-        // === TEACHER CONTROL FUNCTIONS ===
-        window.checkPassword = function() {
-            if (document.getElementById('rosterPassword').value === TEACHER_PASSWORD) {
-                document.getElementById('rosterPasswordArea').classList.add('hidden');
-                document.getElementById('rosterConfigContent').classList.remove('hidden');
-                document.getElementById('lockIndicator').textContent = '(Unlocked 🔓)';
-                document.getElementById('lockIndicator').classList.replace('text-red-500', 'text-green-500');
-            }
-        }
-
-        // window.saveRoster = function() {
-        //     const p = document.getElementById('rosterEditPeriodSelector').value;
-        //     const raw = document.getElementById('rosterInput').value.trim();
-        //     dynamicRoster[p] = raw.split('\n').filter(l => l.trim() !== "").map(l => ({ name: l.trim() }));
-        //     localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
-        //     updateAutocompleteByPeriod();
-        //     alert("Roster saved!");
-        // }
-
-        ////////////////////////////////////
-        window.saveRoster = function() {
-            const p = document.getElementById('rosterEditPeriodSelector').value;
-            const raw = document.getElementById('rosterInput').value.trim();
-            
-            // This now splits the line by the comma to store both ID and Name
-            dynamicRoster[p] = raw.split('\n').filter(line => line.includes(',')).map(line => {
-                const [id, name] = line.split(',');
-                return { id: id.trim(), name: name.trim() };
-            });
-            
-            localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
-            alert("Roster for Period " + p + " saved!");
-        }
-
-        ///////////////////////////////////
-
-        // window.loadRosterForEditing = function() {
-        //     const p = document.getElementById('rosterEditPeriodSelector').value;
-        //     const r = dynamicRoster[p] || [];
-        //     document.getElementById('rosterInput').value = r.map(s => s.name).join('\n');
-        // }
-        /////////////////////////////////
-        window.loadRosterForEditing = function() {
-            const p = document.getElementById('rosterEditPeriodSelector').value;
-            const r = dynamicRoster[p] || [];
-            // This ensures that when the teacher opens the panel, it shows "ID, Name"
-            document.getElementById('rosterInput').value = r.map(s => `${s.id}, ${s.name}`).join('\n');
-        }
-        ///////////////////////////////////
-        function translateIDToName(input) {
-            const val = input.value.trim();
-            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
-            
-            // Check the dynamic roster for a matching ID
-            const student = (dynamicRoster[period] || []).find(s => String(s.id) === val);
-            
-            if (student) {
-                input.value = student.name;
-                // Visual feedback that the ID was recognized
-                input.style.backgroundColor = "#ecfdf5"; 
-                setTimeout(() => input.style.backgroundColor = "", 500);
-                return student.name;
-            }
-            return val;
-        }
-
-        ///////////////////////
-        window.updateAutocompleteByPeriod = function() {
-            const p = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
-            const datalist = document.getElementById('studentNames');
-            // Merge dynamic names with hardcoded names for the suggestion list
-            const hardNames = (HARDCODED_ROSTER_LIST[p] || []).map(s => s.name);
-            const dynNames = (dynamicRoster[p] || []).map(s => s.name);
-            const allNames = [...new Set([...hardNames, ...dynNames])];
-            
-            datalist.innerHTML = allNames.map(name => `<option value="${name}">`).join('');
-        }
-
-        // === EXPORT & QR LOGIC ===
-        window.downloadLog = function() {
-            if (sessions.length === 0) return;
-            
-            let content = `Pass Log - ${new Date().toLocaleDateString()}\n`;
-            content += `Name | Reason | Period | Time Out | Time In | Total\n`;
-            content += `-`.repeat(60) + `\n`;
-
-            sessions.forEach(s => {
-                const inTimeStr = s.inTime ? formatTime(s.inTime) : "STILL OUT";
-                const durStr = s.inTime ? formatDuration(s.duration) : "---";
-                content += `${s.name} | ${s.reason} | P${s.period} | ${formatTime(s.outTime)} | ${inTimeStr} | ${durStr}\n`;
-            });
-
-            // Show QR
-            const qrContainer = document.getElementById("qrcode");
-            qrContainer.innerHTML = "";
-            new QRCode(qrContainer, { text: content, width: 200, height: 200 });
-            document.getElementById('qrModal').classList.remove('hidden');
-
-            // Download File
-            const blob = new Blob([content], { type: 'text/plain' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `ClassLog_${new Date().toISOString().slice(0,10)}.txt`;
-            link.click();
-        }
-
-        // === HELPERS ===
-        function saveSessionsToLocal() { localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); }
-        function formatDuration(ms) {
-            const m = Math.floor(ms / 60000);
-            const s = Math.floor((ms % 60000) / 1000);
-            return `${m}m ${s}s`;
-        }
-        function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-
-        window.renderLogs = function() {
-            const activeLog = document.getElementById('activeLogDisplay');
-            const completedLog = document.getElementById('completedLogDisplay');
-            const activeStudents = sessions.filter(s => s.inTime === null);
-            
-            document.getElementById('outCount').textContent = activeStudents.length;
-            document.getElementById('noActiveMessage').classList.toggle('hidden', activeStudents.length > 0);
-            activeLog.innerHTML = '';
-
-            activeStudents.forEach(student => {
-                const element = document.createElement('div');
-                element.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200`;
-                element.innerHTML = `
-                    <div><p class="font-bold text-gray-800">${student.name}</p>
-                    <p class="text-xs text-gray-500">${student.reason} (P${student.period}) since ${formatTime(student.outTime)}</p></div>
-                    <div class="text-right"><p class="font-extrabold text-indigo-600">${formatDuration(Date.now() - student.outTime)}</p></div>`;
-                activeLog.appendChild(element);
-            });
-
-            completedLog.innerHTML = '';
-            sessions.filter(s => s.inTime !== null).reverse().slice(0, 10).forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'status-in p-2 rounded text-xs border border-green-200';
-                div.innerHTML = `<b>${s.name}</b> (${s.reason}) - ${formatDuration(s.duration)}`;
-                completedLog.appendChild(div);
-            });
-        }
-
-        window.clearAllSessions = function() {
-            if(confirm("Clear all logs?")) { sessions = []; saveSessionsToLocal(); renderLogs(); }
-        }
-
-        window.onload = function() {
-            loadLocalData();
-            updateAutocompleteByPeriod();
-            document.querySelectorAll('input[name="currentPeriod"]').forEach(r => r.addEventListener('change', updateAutocompleteByPeriod));
-            setInterval(renderLogs, 1000);
-
-            //////////////////////////
-            document.getElementById('studentNameInput').addEventListener('input', function(e) {
-                if (e.target.value.length > 2) { // Starts looking after 3 characters typed
-                    translateIDToName(e.target);
-                }
-            });
-            /////////////////////////
-        }
-    </script>
-</body>
-</html>
