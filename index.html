@@ -456,21 +456,63 @@
             }
         }
 
+        // window.saveRoster = function() {
+        //     const p = document.getElementById('rosterEditPeriodSelector').value;
+        //     const raw = document.getElementById('rosterInput').value.trim();
+        //     dynamicRoster[p] = raw.split('\n').filter(l => l.trim() !== "").map(l => ({ name: l.trim() }));
+        //     localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
+        //     updateAutocompleteByPeriod();
+        //     alert("Roster saved!");
+        // }
+
+        ////////////////////////////////////
         window.saveRoster = function() {
             const p = document.getElementById('rosterEditPeriodSelector').value;
             const raw = document.getElementById('rosterInput').value.trim();
-            dynamicRoster[p] = raw.split('\n').filter(l => l.trim() !== "").map(l => ({ name: l.trim() }));
+            
+            // This now splits the line by the comma to store both ID and Name
+            dynamicRoster[p] = raw.split('\n').filter(line => line.includes(',')).map(line => {
+                const [id, name] = line.split(',');
+                return { id: id.trim(), name: name.trim() };
+            });
+            
             localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
-            updateAutocompleteByPeriod();
-            alert("Roster saved!");
+            alert("Roster for Period " + p + " saved!");
         }
 
+        ///////////////////////////////////
+
+        // window.loadRosterForEditing = function() {
+        //     const p = document.getElementById('rosterEditPeriodSelector').value;
+        //     const r = dynamicRoster[p] || [];
+        //     document.getElementById('rosterInput').value = r.map(s => s.name).join('\n');
+        // }
+        /////////////////////////////////
         window.loadRosterForEditing = function() {
             const p = document.getElementById('rosterEditPeriodSelector').value;
             const r = dynamicRoster[p] || [];
-            document.getElementById('rosterInput').value = r.map(s => s.name).join('\n');
+            // This ensures that when the teacher opens the panel, it shows "ID, Name"
+            document.getElementById('rosterInput').value = r.map(s => `${s.id}, ${s.name}`).join('\n');
+        }
+        ///////////////////////////////////
+        function translateIDToName(input) {
+            const val = input.value.trim();
+            const period = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
+            
+            // Check the dynamic roster for a matching ID
+            const student = (dynamicRoster[period] || []).find(s => String(s.id) === val);
+            
+            if (student) {
+                input.value = student.name;
+                // Visual feedback that the ID was recognized
+                input.style.backgroundColor = "#ecfdf5"; 
+                setTimeout(() => input.style.backgroundColor = "", 500);
+                return student.name;
+            }
+            return val;
         }
 
+        ///////////////////////
         window.updateAutocompleteByPeriod = function() {
             const p = document.querySelector('input[name="currentPeriod"]:checked')?.value || '1';
             const datalist = document.getElementById('studentNames');
@@ -556,6 +598,14 @@
             updateAutocompleteByPeriod();
             document.querySelectorAll('input[name="currentPeriod"]').forEach(r => r.addEventListener('change', updateAutocompleteByPeriod));
             setInterval(renderLogs, 1000);
+
+            //////////////////////////
+            document.getElementById('studentNameInput').addEventListener('input', function(e) {
+                if (e.target.value.length > 2) { // Starts looking after 3 characters typed
+                    translateIDToName(e.target);
+                }
+            });
+            /////////////////////////
         }
     </script>
 </body>
