@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Pass Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f7f9fb; }
+        .status-out { background-color: #fff1ff; border-left: 4px solid #c084fc; }
+        .status-office { background-color: #e0f2fe; border-left: 4px solid #38bdf8; }
+        .status-in { background-color: #d1fae5; border-left: 4px solid #10b981; }
+        
+        .active-step-btn { 
+            border-color: #4f46e5 !important; 
+            background-color: #f5f3ff !important; 
+            box-shadow: 0 0 0 2px #4f46e5; 
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">Student Pass Tracker</h1>
+            <p class="text-gray-500 mt-2">Please follow the steps below to sign out or in.</p>
+        </header>
+        
+        <!-- MAIN ACTION WIZARD -->
+        <div class="bg-white p-6 rounded-xl shadow-lg mb-8 border border-gray-200">
+            
+            <!-- Step 1: Period Selection -->
+            <div id="step1" class="mb-8">
+                <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">1</span>
+                    Select Your Period
+                </h2>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <button onclick="setPeriod('1')" id="p-btn-1" class="period-btn p-4 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:border-indigo-300 transition-all">Period 1</button>
+                    <button onclick="setPeriod('2')" id="p-btn-2" class="period-btn p-4 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:border-indigo-300 transition-all">Period 2</button>
+                    <button onclick="setPeriod('3')" id="p-btn-3" class="period-btn p-4 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:border-indigo-300 transition-all">Period 3</button>
+                    <button onclick="setPeriod('4')" id="p-btn-4" class="period-btn p-4 border-2 border-gray-200 rounded-xl font-bold text-gray-600 hover:border-indigo-300 transition-all">Period 4</button>
+                </div>
+            </div>
+
+            <!-- Step 2: Reason Selection -->
+            <div id="step2" class="mb-8 hidden fade-in">
+                <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">2</span>
+                    Where are you going?
+                </h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button onclick="setReason('Restroom')" id="r-btn-restroom" class="reason-btn p-6 border-2 border-gray-200 rounded-xl font-bold text-gray-700 flex flex-col items-center gap-2 hover:border-indigo-300 transition-all">
+                        <span class="text-3xl">🚽</span> Restroom
+                    </button>
+                    <button onclick="setReason('Office Pass')" id="r-btn-office" class="reason-btn p-6 border-2 border-gray-200 rounded-xl font-bold text-gray-700 flex flex-col items-center gap-2 hover:border-indigo-300 transition-all">
+                        <span class="text-3xl">📋</span> Office Pass
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: ID Input & Action -->
+            <div id="step3" class="hidden fade-in">
+                <h2 class="text-xl font-bold mb-4 text-gray-700 flex items-center gap-2">
+                    <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">3</span>
+                    Enter Student ID
+                </h2>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <input type="text" id="studentNameInput" placeholder="Type ID here..." autocomplete="off" class="flex-grow p-4 border-2 border-gray-300 rounded-xl text-xl focus:outline-none focus:ring-4 focus:ring-indigo-100">
+                    <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Sign Out 🏃</button>
+                    <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Return ✅</button>
+                </div>
+                
+                <div class="mt-4 flex justify-between items-center">
+                    <button onclick="resetWizard()" class="text-indigo-600 font-semibold hover:underline">← Start Over / Clear</button>
+                    <p id="messageArea" class="text-red-600 font-bold"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGS DISPLAY -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">
+                <h2 class="text-xl font-bold text-indigo-700 border-b border-indigo-100 pb-2">
+                    Students Currently Out 
+                    <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span>
+                </h2>
+                <div id="activeLogContentWrapper" class="pt-4">
+                    <p class="text-gray-400 italic mb-3" id="noActiveMessage">No students currently signed out.</p>
+                    <div id="activeLogDisplay" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <!-- TEACHER CONTROLS -->
+            <div class="lg:col-span-1">
+                <div id="rosterConfigContainer" class="bg-white rounded-xl shadow-lg border border-gray-200">
+                    <div class="p-4 bg-gray-100 rounded-t-xl">
+                        <h3 class="font-semibold text-gray-700 text-xl">Teacher Control <span id="lockIndicator" class="text-red-500 text-sm ml-2">(🔒)</span></h3>
+                    </div>
+                    
+                    <div id="rosterPasswordArea" class="p-4 border-b border-gray-200">
+                        <div class="flex gap-2">
+                            <input type="password" id="rosterPassword" placeholder="Teacher Pass" class="flex-grow p-2 border border-gray-300 rounded-lg text-sm">
+                            <button onclick="checkPassword()" class="bg-green-500 text-white px-4 rounded-lg text-sm">Unlock</button>
+                        </div>
+                    </div>
+
+                    <div id="rosterConfigContent" class="p-4 hidden">
+                         <div class="mb-4">
+                            <select id="rosterEditPeriodSelector" onchange="loadRosterForEditing()" class="w-full p-2 border border-gray-300 rounded-lg text-sm">
+                                <option value="1">Period 1 Roster</option>
+                                <option value="2">Period 2 Roster</option>
+                                <option value="3">Period 3 Roster</option>
+                                <option value="4">Period 4 Roster</option>
+                            </select>
+                        </div>
+                        <textarea id="rosterInput" rows="5" placeholder="ID, Name" class="w-full p-2 border border-gray-300 rounded-lg text-sm font-mono"></textarea>
+                        <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white py-2 rounded-lg text-sm w-full">Save Roster</button>
+                        
+                        <div class="mt-6 pt-4 border-t">
+                            <p class="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wider">Today's History (Top 10):</p>
+                            <div id="completedLogDisplay" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+                            <div class="mt-4 flex flex-col gap-2">
+                                <button onclick="downloadLog()" class="w-full bg-gray-100 text-gray-600 text-xs py-2 rounded border">Export Log & QR 💾</button>
+                                <button onclick="clearAllSessions()" class="w-full bg-red-50 text-red-600 text-xs py-2 rounded">Clear All Logs</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QR MODAL -->
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
+            <h2 class="text-xl font-bold mb-4">Log Export</h2>
+            <div id="qrcode" class="flex justify-center mb-4"></div>
+            <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold w-full">Close</button>
+        </div>
+    </div>
+
+    <script>
+        // === CONFIG & STATE ===
+        const ROSTER_KEY = 'classRoster_v2';
+        const SESSIONS_KEY = 'classSessions_v2';
+        const TEACHER_PASSWORD = "CHSteacher";
+        
+        let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
+        let sessions = []; 
+        let wizardData = { period: null, reason: null };
+
+        const HARDCODED_ROSTER_LIST = {
+            '1': [
+                { id: "12345", name: "Student Period 1" },
+                { id: "47006988", name: "Barkas, Blake K." },  
+                { id: "47002194", name: "Bennett, Cole R." }, 
+                { id: "47009608", name: "Castro Valle, Isaac" },  
+                { id: "47003213", name: "Cohn, Jaylen L." },  
+                { id: "47002556", name: "Coker, Ryan B." },  
+                { id: "47003247", name: "Craig, Logan R." },  
+                { id: "47009653", name: "Hinkson, Aidan S." },  
+                { id: "47006816", name: "Irwig, Stephanie L." },  
+                { id: "47005250", name: "Koczan, Paige E." },  
+                { id: "47002565", name: "McCann, Logan N." },  
+                { id: "47007936", name: "Moore, Henry D." },  
+                { id: "47010212", name: "Nutter, Micheal T." },  
+                { id: "47002880", name: "Oytas, Kyle M." },  
+                { id: "47001830", name: "Peterson, Kylie L." }, 
+                { id: "47009154", name: "Quintana, Julio C. Jr" },  
+                { id: "47005051", name: "Reyes, lan C." },  
+                { id: "47006595", name: "Smith, Thomas W." },  
+                { id: "47009427", name: "Suarez, Theo A." },  
+                { id: "47006976", name: "Tillner, Kesler J." },
+                { id: "47005508", name: "Dunn, Sydney"},
+                { id: "47005507", name: "Dunn, Brecki"},
+                { id: "47002816", name: "Hoak, Bri"}
+            ],
+            '2': [
+                { id: "12345", name: "Student Period 2" },
+                { id: "47006988", name: "Barkas, Blake K." }, 
+                { id: "47002693", name: "Chalepas, Ryan A." }, 
+                { id: "47002556", name: "Coker, Ryan B." }, 
+                { id: "47003408", name: "Cooper, Liam K." }, 
+                { id: "47005852", name: "Gilbert, Timothy Q." }, 
+                { id: "47002617", name: "Grube, Tobin" }, 
+                { id: "47002696", name: "Guymon, Stanley W." }, 
+                { id: "47009498", name: "Kaul, Jane B." }, 
+                { id: "47005250", name: "Koczan, Paige E." }, 
+                { id: "47008889", name: "Lavalle, Pablo" }, 
+                { id: "47002564", name: "McCann, Luke R." }, 
+                { id: "47010376", name: "Menghani, Sonali" }, 
+                { id: "47007936", name: "Moore, Henry D." }, 
+                { id: "47009648", name: "Nehodiuk, Artem" }, 
+                { id: "47004264", name: "Nette, Christian Dane Z." }, 
+                { id: "47010212", name: "Nutter, Micheal T." }, 
+                { id: "47007984", name: "Peralta, Gerardo V." }, 
+                { id: "47005051", name: "Reyes, Ian C." }, 
+                { id: "47009925", name: "Russo, Vincent A." }, 
+                { id: "47003688", name: "Stevens, Xavier C." }, 
+                { id: "47002887", name: "Tamez Munoz, Juan P." }, 
+                { id: "47002713", name: "Vinegrad, Daniel" }, 
+                { id: "47006174", name: "Wilbur, Sean T." }, 
+                { id: "47002903", name: "Youngblood, Anton" },
+                { id: "47005560", name: "Reidnarson, Spencer" }
+            ],
+            '3': [
+                { id: "12345", name: "Student Period 3" },
+                { id: "302", name: "Aidan Arendt" }
+            ],
+            '4': [
+                { id: "12345", name: "Student Period 4" },
+                { id: "47010769", name: "Ahumada, Ezra C." }, 
+                { id: "47010709", name: "Akonni, Talin J." }, 
+                { id: "47008378", name: "Aston, Porter L." }, 
+                { id: "47009438", name: "Avalos, Leslee E." }, 
+                { id: "47002195", name: "Bennett, Katherine M." }, 
+                { id: "47010311", name: "Bodin, Thomas" }, 
+                { id: "47008075", name: "Ertekin, Devin E." }, 
+                { id: "47010241", name: "Hernandez Gastelum, Ana Sofia" }, 
+                { id: "47009114", name: "Iniguez, Ximena S." }, 
+                { id: "47003298", name: "Jackson, Charlotte E." }, 
+                { id: "47010371", name: "Johnson, Gilbert I. Jr." }, 
+                { id: "47010266", name: "Mensah-Baah, Danielle-Elizabeth M." }, 
+                { id: "47009971", name: "Mor, Nicolas J." }, 
+                { id: "47006633", name: "Olson, Emma E." }, 
+                { id: "47007224", name: "Pederziani Cole, Madden I." }, 
+                { id: "47009154", name: "Quintana, Julio C. Jr" }, 
+                { id: "47003256", name: "Roos, Nadia J." }, 
+                { id: "47003934", name: "Rose, Christopher M." }, 
+                { id: "47010365", name: "Rugama, Julieta" }, 
+                { id: "47004087", name: "Tamariz, Sebastian A." }, 
+                { id: "47003931", name: "Toohey, Fiona G." }, 
+                { id: "47006718", name: "Ward, Landon J." }, 
+                { id: "47001822", name: "Worth, Jayden M." },
+                { id: "47006951", name: "Reuter, Miles"},
+                { id: "47004087", name: "Tabariz, Sebastian" },
+                { id: "47003311", name: "Marin, Sunny" }
+            ]
+        };
+
+        // === WIZARD LOGIC ===
+        window.setPeriod = function(p) {
+            wizardData.period = p;
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active-step-btn'));
+            document.getElementById(`p-btn-${p}`).classList.add('active-step-btn');
+            
+            // Show Step 2
+            const s2 = document.getElementById('step2');
+            s2.classList.remove('hidden');
+            s2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        window.setReason = function(r) {
+            wizardData.reason = r;
+            document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active-step-btn'));
+            const btnId = r === 'Restroom' ? 'r-btn-restroom' : 'r-btn-office';
+            document.getElementById(btnId).classList.add('active-step-btn');
+            
+            // Show Step 3
+            const s3 = document.getElementById('step3');
+            s3.classList.remove('hidden');
+            document.getElementById('studentNameInput').focus();
+            s3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        };
+
+        window.resetWizard = function() {
+            wizardData = { period: null, reason: null };
+            document.getElementById('studentNameInput').value = "";
+            document.getElementById('messageArea').textContent = "";
+            document.querySelectorAll('.period-btn, .reason-btn').forEach(b => b.classList.remove('active-step-btn'));
+            document.getElementById('step2').classList.add('hidden');
+            document.getElementById('step3').classList.add('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        // === DATA LOGIC ===
+        function loadData() {
+            const savedRoster = localStorage.getItem(ROSTER_KEY);
+            if (savedRoster) dynamicRoster = JSON.parse(savedRoster);
+            
+            const savedSessions = localStorage.getItem(SESSIONS_KEY);
+            sessions = savedSessions ? JSON.parse(savedSessions) : [];
+            
+            renderLogs();
+            loadRosterForEditing();
+        }
+
+        function translateIDToName(input) {
+            const val = input.value.trim();
+            if (!val) return ""; 
+
+            const period = wizardData.period;
+            if (!period) return val;
+            
+            const teacherList = dynamicRoster[period] || [];
+            const hardcodedList = HARDCODED_ROSTER_LIST[period] || [];
+            const combinedList = [...teacherList, ...hardcodedList];
+
+            const student = combinedList.find(s => String(s.id).trim() === String(val));
+            
+            if (student) {
+                input.value = student.name;
+                input.style.backgroundColor = "#d1fae5"; 
+                setTimeout(() => input.style.backgroundColor = "", 400);
+                return student.name;
+            }
+            return val;
+        }
+
+        window.handleSignOut = function() {
+            const input = document.getElementById('studentNameInput');
+            const name = translateIDToName(input) || input.value.trim();
+            const { period, reason } = wizardData;
+
+            if (!name || !reason || !period) {
+                document.getElementById('messageArea').textContent = "Incomplete steps!";
+                return;
+            }
+
+            // Restroom Limit (2)
+            if (reason === 'Restroom') {
+                const outCount = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
+                if (outCount >= 2) {
+                    document.getElementById('messageArea').textContent = "Wait! Restroom limit reached (2).";
+                    return;
+                }
+            }
+
+            // Prevent duplicate sign-out
+            if (sessions.some(s => s.name === name && s.inTime === null)) {
+                document.getElementById('messageArea').textContent = "You're already signed out!";
+                return;
+            }
+            
+            sessions.push({ name, reason, period, outTime: Date.now(), inTime: null });
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+            resetWizard();
+            renderLogs();
+        };
+
+        window.handleSignIn = function() {
+            const input = document.getElementById('studentNameInput');
+            const name = translateIDToName(input) || input.value.trim();
+            const period = wizardData.period;
+
+            if (!name || !period) {
+                document.getElementById('messageArea').textContent = "Select Period & Enter ID!";
+                return;
+            }
+
+            const idx = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
+            if (idx === -1) {
+                document.getElementById('messageArea').textContent = "Not found in 'Out' list.";
+                return;
+            }
+
+            sessions[idx].inTime = Date.now();
+            sessions[idx].duration = sessions[idx].inTime - sessions[idx].outTime;
+            localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
+            resetWizard();
+            renderLogs();
+        };
+
+        // === TEACHER CONTROLS ===
+        window.checkPassword = function() {
+            if (document.getElementById('rosterPassword').value === TEACHER_PASSWORD) {
+                document.getElementById('rosterPasswordArea').classList.add('hidden');
+                document.getElementById('rosterConfigContent').classList.remove('hidden');
+                document.getElementById('lockIndicator').textContent = '(🔓)';
+                document.getElementById('lockIndicator').classList.replace('text-red-500', 'text-green-500');
+            }
+        };
+
+        window.saveRoster = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const raw = document.getElementById('rosterInput').value.trim();
+            dynamicRoster[p] = raw.split('\n').filter(l => l.includes(',')).map(line => {
+                const [id, name] = line.split(',');
+                return { id: id.trim(), name: name.trim() };
+            });
+            localStorage.setItem(ROSTER_KEY, JSON.stringify(dynamicRoster));
+            alert(`Period ${p} Saved!`);
+        };
+
+        window.loadRosterForEditing = function() {
+            const p = document.getElementById('rosterEditPeriodSelector').value;
+            const r = dynamicRoster[p] || [];
+            document.getElementById('rosterInput').value = r.map(s => `${s.id}, ${s.name}`).join('\n');
+        };
+
+        // === HELPERS ===
+        function formatDuration(ms) {
+            const m = Math.floor(ms / 60000);
+            const s = Math.floor((ms % 60000) / 1000);
+            return `${m}m ${s}s`;
+        }
+
+        function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+
+        window.renderLogs = function() {
+            const activeLog = document.getElementById('activeLogDisplay');
+            const completedLog = document.getElementById('completedLogDisplay');
+            const activeStudents = sessions.filter(s => s.inTime === null);
+            
+            document.getElementById('outCount').textContent = activeStudents.length;
+            document.getElementById('noActiveMessage').classList.toggle('hidden', activeStudents.length > 0);
+            
+            activeLog.innerHTML = '';
+            activeStudents.sort((a,b) => b.outTime - a.outTime).forEach(student => {
+                const div = document.createElement('div');
+                div.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200`;
+                div.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800">${student.name}</p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-tighter font-semibold">${student.reason} • P${student.period} • OUT ${formatTime(student.outTime)}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-extrabold text-indigo-600 timer" data-start="${student.outTime}">...</p>
+                    </div>`;
+                activeLog.appendChild(div);
+            });
+
+            completedLog.innerHTML = '';
+            sessions.filter(s => s.inTime !== null).slice(-10).reverse().forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'status-in p-2 rounded text-[10px] border border-green-200 flex justify-between';
+                div.innerHTML = `<span><b>${s.name}</b></span> <span>${formatDuration(s.duration)}</span>`;
+                completedLog.appendChild(div);
+            });
+            updateTimers();
+        };
+
+        function updateTimers() {
+            document.querySelectorAll('.timer').forEach(el => {
+                const start = parseInt(el.dataset.start);
+                el.textContent = formatDuration(Date.now() - start);
+            });
+        }
+
+        window.clearAllSessions = function() {
+            if(confirm("Clear all logs?")) { sessions = []; localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); renderLogs(); }
+        };
+
+        window.downloadLog = function() {
+            const text = sessions.map(s => `${s.name}, P${s.period}, ${s.reason}, Out: ${formatTime(s.outTime)}, In: ${s.inTime ? formatTime(s.inTime) : 'N/A'}`).join('\n');
+            const qr = document.getElementById("qrcode");
+            qr.innerHTML = "";
+            new QRCode(qr, { text: text.slice(0, 1000), width: 180, height: 180 });
+            document.getElementById('qrModal').classList.remove('hidden');
+        };
+
+        window.onload = () => {
+            loadData();
+            setInterval(updateTimers, 1000);
+            document.getElementById('studentNameInput').addEventListener('input', (e) => translateIDToName(e.target));
+        };
+    </script>
+</body>
+</html>
