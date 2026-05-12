@@ -19,8 +19,18 @@
             box-shadow: 0 0 0 2px #4f46e5; 
         }
         
-        .fade-in {
-            animation: fadeIn 0.4s ease-out forwards;
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+
+        .error-shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #ef4444 !important;
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
         }
 
         @keyframes fadeIn {
@@ -76,15 +86,20 @@
                     <span class="bg-indigo-600 text-white w-7 h-7 rounded-full inline-flex items-center justify-center text-sm">3</span>
                     Enter Student ID
                 </h2>
-                <div class="flex flex-col md:flex-row gap-4">
-                    <input type="text" id="studentNameInput" placeholder="Type ID here..." autocomplete="off" class="flex-grow p-4 border-2 border-gray-300 rounded-xl text-xl focus:outline-none focus:ring-4 focus:ring-indigo-100">
-                    <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Sign Out 🏃</button>
-                    <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Return ✅</button>
+                <div class="flex flex-col md:flex-row gap-4 relative">
+                    <div class="flex-grow flex flex-col">
+                        <input type="text" id="studentNameInput" oninput="handleIdLookup()" placeholder="Enter ID Number..." autocomplete="off" class="p-4 border-2 border-gray-300 rounded-xl text-xl focus:outline-none focus:ring-4 focus:ring-indigo-100 transition-all">
+                        <p id="namePreview" class="text-sm font-semibold text-indigo-600 mt-1 h-5"></p>
+                    </div>
+                    <div class="flex gap-4 items-start">
+                        <button onclick="handleSignOut()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Sign Out 🏃</button>
+                        <button onclick="handleSignIn()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-xl shadow-md text-lg">Return ✅</button>
+                    </div>
                 </div>
                 
                 <div class="mt-4 flex justify-between items-center">
                     <button onclick="resetWizard()" class="text-indigo-600 font-semibold hover:underline">← Start Over / Clear</button>
-                    <p id="messageArea" class="text-red-600 font-bold"></p>
+                    <p id="messageArea" class="text-red-600 font-bold italic"></p>
                 </div>
             </div>
         </div>
@@ -184,7 +199,7 @@
                 { id: "47009427", name: "Suarez, Theo A." },  
                 { id: "47006976", name: "Tillner, Kesler J." },
                 { id: "47005508", name: "Dunn, Sydney"},
-                { id: "47005507", name: "Dunn, Brecki"},
+                { id: "47005507", name: "Dunn, Breck"},
                 { id: "47002816", name: "Hoak, Bri"}
             ],
             '2': [
@@ -216,7 +231,6 @@
                 { id: "47005560", name: "Reidnarson, Spencer" }
             ],
             '3': [
-                { id: "12345", name: "Student Period 3" },
                 { id: "302", name: "Aidan Arendt" }
             ],
             '4': [
@@ -254,21 +268,22 @@
         window.setPeriod = function(p) {
             wizardData.period = p;
             document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active-step-btn'));
-            document.getElementById(`p-btn-${p}`).classList.add('active-step-btn');
+            const btn = document.getElementById(`p-btn-${p}`);
+            if (btn) btn.classList.add('active-step-btn');
             
-            // Show Step 2
             const s2 = document.getElementById('step2');
             s2.classList.remove('hidden');
             s2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            handleIdLookup(); // Refresh preview if ID already in input
         };
 
         window.setReason = function(r) {
             wizardData.reason = r;
             document.querySelectorAll('.reason-btn').forEach(b => b.classList.remove('active-step-btn'));
             const btnId = r === 'Restroom' ? 'r-btn-restroom' : 'r-btn-office';
-            document.getElementById(btnId).classList.add('active-step-btn');
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.add('active-step-btn');
             
-            // Show Step 3
             const s3 = document.getElementById('step3');
             s3.classList.remove('hidden');
             document.getElementById('studentNameInput').focus();
@@ -279,6 +294,8 @@
             wizardData = { period: null, reason: null };
             document.getElementById('studentNameInput').value = "";
             document.getElementById('messageArea').textContent = "";
+            document.getElementById('namePreview').textContent = "";
+            document.getElementById('studentNameInput').classList.remove('error-shake');
             document.querySelectorAll('.period-btn, .reason-btn').forEach(b => b.classList.remove('active-step-btn'));
             document.getElementById('step2').classList.add('hidden');
             document.getElementById('step3').classList.add('hidden');
@@ -286,91 +303,159 @@
         };
 
         // === DATA LOGIC ===
+        function findStudent(idVal, period) {
+            if (!idVal || !period) return null;
+            
+            // Clean the input ID for matching
+            const targetId = String(idVal).trim();
+            
+            // Look in Teacher-added roster
+            const teacherList = dynamicRoster[period] || [];
+            let found = teacherList.find(s => String(s.id).trim() === targetId);
+            
+            // If not found, look in Hardcoded roster
+            if (!found) {
+                const hardcodedList = HARDCODED_ROSTER_LIST[period] || [];
+                found = hardcodedList.find(s => String(s.id).trim() === targetId);
+            }
+            
+            return found;
+        }
+
+        // === ID LOOKUP & PREVIEW ===
+        window.handleIdLookup = function() {
+            const idVal = document.getElementById('studentNameInput').value.trim();
+            const previewEl = document.getElementById('namePreview');
+            const period = wizardData.period;
+
+            if (!idVal || !period) {
+                previewEl.textContent = "";
+                return;
+            }
+
+            const student = findStudent(idVal, period);
+            if (student) {
+                previewEl.textContent = `Student: ${student.name}`;
+                previewEl.classList.remove('text-red-500');
+                previewEl.classList.add('text-indigo-600');
+            } else if (idVal.length >= 3) {
+                previewEl.textContent = "ID not found in this period.";
+                previewEl.classList.remove('text-indigo-600');
+                previewEl.classList.add('text-red-500');
+            } else {
+                previewEl.textContent = "";
+            }
+        };
+
         function loadData() {
             const savedRoster = localStorage.getItem(ROSTER_KEY);
             if (savedRoster) dynamicRoster = JSON.parse(savedRoster);
-            
             const savedSessions = localStorage.getItem(SESSIONS_KEY);
             sessions = savedSessions ? JSON.parse(savedSessions) : [];
-            
             renderLogs();
             loadRosterForEditing();
         }
 
-        function translateIDToName(input) {
-            const val = input.value.trim();
-            if (!val) return ""; 
+        function triggerError(msg) {
+            const el = document.getElementById('messageArea');
+            const input = document.getElementById('studentNameInput');
+            el.className = "text-red-600 font-bold italic";
+            el.textContent = "⚠️ " + msg;
+            input.classList.add('error-shake');
+            setTimeout(() => input.classList.remove('error-shake'), 500);
+        }
 
-            const period = wizardData.period;
-            if (!period) return val;
-            
-            const teacherList = dynamicRoster[period] || [];
-            const hardcodedList = HARDCODED_ROSTER_LIST[period] || [];
-            const combinedList = [...teacherList, ...hardcodedList];
-
-            const student = combinedList.find(s => String(s.id).trim() === String(val));
-            
-            if (student) {
-                input.value = student.name;
-                input.style.backgroundColor = "#d1fae5"; 
-                setTimeout(() => input.style.backgroundColor = "", 400);
-                return student.name;
-            }
-            return val;
+        function triggerSuccess(msg) {
+            const el = document.getElementById('messageArea');
+            el.className = "text-green-600 font-bold italic";
+            el.textContent = "✅ " + msg;
         }
 
         window.handleSignOut = function() {
             const input = document.getElementById('studentNameInput');
-            const name = translateIDToName(input) || input.value.trim();
+            const idValue = input.value.trim();
             const { period, reason } = wizardData;
 
-            if (!name || !reason || !period) {
-                document.getElementById('messageArea').textContent = "Incomplete steps!";
+            if (!idValue) { triggerError("Enter ID!"); return; }
+            if (!reason || !period) { triggerError("Incomplete steps!"); return; }
+
+            const student = findStudent(idValue, period);
+            if (!student) {
+                triggerError(`Invalid ID for Period ${period}.`);
                 return;
             }
 
-            // Restroom Limit (2)
+            const name = student.name;
+
             if (reason === 'Restroom') {
                 const outCount = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
                 if (outCount >= 2) {
-                    document.getElementById('messageArea').textContent = "Wait! Restroom limit reached (2).";
+                    triggerError("Wait! Restroom limit reached (2).");
                     return;
                 }
             }
 
-            // Prevent duplicate sign-out
             if (sessions.some(s => s.name === name && s.inTime === null)) {
-                document.getElementById('messageArea').textContent = "You're already signed out!";
+                triggerError(`${name} is already signed out!`);
                 return;
             }
+
+            const wasPreviouslyOut = sessions.some(s => s.name === name && s.period === period && s.reason === reason);
             
-            sessions.push({ name, reason, period, outTime: Date.now(), inTime: null });
+            sessions.push({ 
+                name, 
+                reason, 
+                period, 
+                outTime: Date.now(), 
+                inTime: null,
+                isMultiUse: wasPreviouslyOut
+            });
+            
             localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-            resetWizard();
-            renderLogs();
+            
+            triggerSuccess(`${name} is now signed out.`);
+            
+            setTimeout(() => {
+                resetWizard();
+                renderLogs();
+            }, 1000);
         };
 
         window.handleSignIn = function() {
             const input = document.getElementById('studentNameInput');
-            const name = translateIDToName(input) || input.value.trim();
+            const idValue = input.value.trim();
             const period = wizardData.period;
 
-            if (!name || !period) {
-                document.getElementById('messageArea').textContent = "Select Period & Enter ID!";
+            if (!idValue) { triggerError("Enter ID!"); return; }
+
+            const student = findStudent(idValue, period);
+            if (!student) {
+                triggerError(`Invalid ID for Period ${period}.`);
                 return;
             }
 
-            const idx = sessions.findIndex(s => s.name === name && s.period === period && s.inTime === null);
+            const idx = sessions.findIndex(s => s.name === student.name && s.period === period && s.inTime === null);
             if (idx === -1) {
-                document.getElementById('messageArea').textContent = "Not found in 'Out' list.";
+                triggerError(`${student.name} not found in 'Out' list.`);
                 return;
             }
 
-            sessions[idx].inTime = Date.now();
-            sessions[idx].duration = sessions[idx].inTime - sessions[idx].outTime;
+            const now = Date.now();
+            sessions[idx].inTime = now;
+            sessions[idx].duration = now - sessions[idx].outTime;
+            
+            if (sessions[idx].reason === 'Restroom' && (sessions[idx].duration / 60000) > 10) {
+                sessions[idx].exceededTime = true;
+            }
+
             localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-            resetWizard();
-            renderLogs();
+            
+            triggerSuccess(`Welcome back, ${student.name}!`);
+
+            setTimeout(() => {
+                resetWizard();
+                renderLogs();
+            }, 1000);
         };
 
         // === TEACHER CONTROLS ===
@@ -421,9 +506,12 @@
             activeStudents.sort((a,b) => b.outTime - a.outTime).forEach(student => {
                 const div = document.createElement('div');
                 div.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200`;
+                
+                const alertTag = student.isMultiUse ? `<span class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 font-bold">2ND+ TRIP</span>` : '';
+
                 div.innerHTML = `
                     <div>
-                        <p class="font-bold text-gray-800">${student.name}</p>
+                        <p class="font-bold text-gray-800">${student.name} ${alertTag}</p>
                         <p class="text-[10px] text-gray-500 uppercase tracking-tighter font-semibold">${student.reason} • P${student.period} • OUT ${formatTime(student.outTime)}</p>
                     </div>
                     <div class="text-right">
@@ -435,8 +523,9 @@
             completedLog.innerHTML = '';
             sessions.filter(s => s.inTime !== null).slice(-10).reverse().forEach(s => {
                 const div = document.createElement('div');
+                const timeColor = s.exceededTime ? 'text-red-600 font-bold' : 'text-gray-500';
                 div.className = 'status-in p-2 rounded text-[10px] border border-green-200 flex justify-between';
-                div.innerHTML = `<span><b>${s.name}</b></span> <span>${formatDuration(s.duration)}</span>`;
+                div.innerHTML = `<span><b>${s.name}</b></span> <span class="${timeColor}">${formatDuration(s.duration)}</span>`;
                 completedLog.appendChild(div);
             });
             updateTimers();
@@ -464,7 +553,6 @@
         window.onload = () => {
             loadData();
             setInterval(updateTimers, 1000);
-            document.getElementById('studentNameInput').addEventListener('input', (e) => translateIDToName(e.target));
         };
     </script>
 </body>
