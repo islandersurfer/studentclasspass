@@ -37,6 +37,19 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Styles for the selectable text area */
+        .copyable-table {
+            font-family: monospace;
+            white-space: pre;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
@@ -144,7 +157,6 @@
                         <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white py-2 rounded-lg text-sm w-full">Save Roster</button>
                         
                         <div class="mt-6 pt-4 border-t">
-                            <!-- NEW GOOGLE DRIVE FOLDER BUTTON -->
                             <button onclick="openGoogleDrive()" class="w-full mb-4 bg-blue-50 text-blue-700 border border-blue-200 py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
                                   <path d="M12.5 10a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5v-2a.5.5 0 0 1 .5-.5h9zm-1.5-3.5V2H5v4.5H3V2c0-1.105.895-2 2-2h6c1.105 0 2 .895 2 2v4.5h-2z"/>
@@ -158,11 +170,15 @@
                                 <span id="historyCount" class="text-indigo-400 font-normal">0 entries</span>
                             </p>
                             <div id="completedLogDisplay" class="space-y-2 max-h-64 overflow-y-auto pr-2 border-b mb-4 pb-2"></div>
-                            <div class="mt-4 flex flex-col gap-2">
+                            
+                            <div class="mt-4 grid grid-cols-1 gap-2">
                                 <button onclick="openExportModal()" class="w-full bg-indigo-600 text-white font-bold text-xs py-3 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
-                                    <span>💾</span> Export Complete Log & QR
+                                    <span>💾</span> Export / QR / Download
                                 </button>
-                                <button onclick="clearAllSessions()" class="w-full bg-red-50 text-red-600 text-xs py-2 rounded-lg border border-red-100">Clear All Logs</button>
+                                <button onclick="openCopyTextModal()" class="w-full bg-emerald-600 text-white font-bold text-xs py-3 rounded-lg shadow-sm hover:bg-emerald-700 transition-colors flex items-center justify-center gap-2">
+                                    <span>📋</span> View Data (Copy to Clipboard)
+                                </button>
+                                <button onclick="clearAllSessions()" class="w-full bg-red-50 text-red-600 text-xs py-2 rounded-lg border border-red-100 mt-2">Clear All Logs</button>
                             </div>
                         </div>
                     </div>
@@ -171,11 +187,11 @@
         </div>
     </div>
 
-    <!-- QR MODAL -->
+    <!-- EXPORT/QR MODAL -->
     <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4">
         <div class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-md w-full">
             <h2 class="text-2xl font-bold mb-2">Export Data</h2>
-            <p class="text-gray-500 text-sm mb-6">Scan the QR for a text summary or download the full log.</p>
+            <p class="text-gray-500 text-sm mb-6">Scan the QR for a text summary or download the full CSV log.</p>
             
             <div id="qrcode" class="flex justify-center mb-6 bg-white p-4 rounded-xl border"></div>
             
@@ -188,14 +204,34 @@
         </div>
     </div>
 
+    <!-- COPY TEXT MODAL -->
+    <div id="copyTextModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-2xl w-full flex flex-col h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">Copy Daily Log Data</h2>
+                <button onclick="document.getElementById('copyTextModal').classList.add('hidden')" class="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <p class="text-gray-500 text-sm mb-4">You can highlight and copy the text below directly into your records or a spreadsheet.</p>
+            
+            <div id="copyableArea" class="copyable-table flex-grow overflow-auto mb-4 bg-slate-900 text-slate-100 p-4 rounded-lg select-all">
+                <!-- Text data generated here -->
+            </div>
+            
+            <div class="flex gap-3">
+                <button id="copyFeedbackBtn" onclick="copyTableToClipboard()" class="flex-1 bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
+                    Copy to Clipboard
+                </button>
+                <button onclick="document.getElementById('copyTextModal').classList.add('hidden')" class="bg-gray-100 text-gray-600 px-6 py-3 rounded-xl font-bold border hover:bg-gray-200">Done</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // === CONFIG & STATE ===
         const ROSTER_KEY = 'classRoster_v2';
         const SESSIONS_KEY = 'classSessions_v2';
         const TEACHER_PASSWORD = "CHSteacher";
-        
-        // REPLACE THE URL BELOW WITH YOUR ACTUAL GOOGLE FOLDER LINK
-        const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/folders/1LTI_WIrBc3gi7M9QFzfXt0Vkb0D_SaPm?usp=sharing"; 
+        const GOOGLE_DRIVE_FOLDER_URL = "https://drive.google.com/drive/my-drive"; 
 
         let dynamicRoster = { '1': [], '2': [], '3': [], '4': [] }; 
         let sessions = []; 
@@ -487,47 +523,68 @@
             }
         };
 
-        // --- UPDATED EXPORT LOGIC ---
+        // --- EXPORT LOGIC ---
         window.openExportModal = function() {
             if (sessions.length === 0) {
                 alert("No data to export yet!");
                 return;
             }
-
-            // Generate QR Summary
             const textSummary = "LOG: " + new Date().toLocaleDateString() + "\n" + 
                 sessions.map(s => `${s.name}: ${s.reason} (${formatDuration(s.duration)})`).join('\n').slice(0, 1000);
-            
             const qrContainer = document.getElementById("qrcode");
             qrContainer.innerHTML = "";
             new QRCode(qrContainer, { text: textSummary, width: 220, height: 220 });
-
             document.getElementById('qrModal').classList.remove('hidden');
+        };
+
+        window.openCopyTextModal = function() {
+            if (sessions.length === 0) {
+                alert("No history to display.");
+                return;
+            }
+            const area = document.getElementById('copyableArea');
+            let text = "NAME\tPERIOD\tREASON\tOUT TIME\tIN TIME\tDURATION\n";
+            text += "--------------------------------------------------------------------------------\n";
+            sessions.forEach(s => {
+                const inT = s.inTime ? formatTime(s.inTime) : "STILL OUT";
+                text += `${s.name}\tP${s.period}\t${s.reason}\t${formatTime(s.outTime)}\t${inT}\t${formatDuration(s.duration)}\n`;
+            });
+            area.textContent = text;
+            document.getElementById('copyTextModal').classList.remove('hidden');
+        };
+
+        window.copyTableToClipboard = function() {
+            const text = document.getElementById('copyableArea').textContent;
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+
+            const btn = document.getElementById('copyFeedbackBtn');
+            const originalText = btn.textContent;
+            btn.textContent = "Copied! ✓";
+            btn.classList.replace('bg-indigo-600', 'bg-green-600');
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.replace('bg-green-600', 'bg-indigo-600');
+            }, 2000);
         };
 
         window.initiateCsvDownload = function() {
             if (sessions.length === 0) return;
-
             const csvHeader = "Name,Period,Reason,Out Time,In Time,Duration (ms),Duration (text),Exceeded Limit\n";
             const csvRows = sessions.map(s => {
                 return `"${s.name}",${s.period},"${s.reason}","${new Date(s.outTime).toLocaleString()}","${s.inTime ? new Date(s.inTime).toLocaleString() : 'STILL OUT'}",${s.duration || 0},"${formatDuration(s.duration)}",${s.exceededTime || false}`;
             }).join('\n');
-
             const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            
-            if (navigator.msSaveBlob) { // IE 10+
-                navigator.msSaveBlob(blob, filename);
-            } else {
-                const url = URL.createObjectURL(blob);
-                link.setAttribute('href', url);
-                link.setAttribute('download', `Classroom_Log_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
-                link.style.visibility = 'hidden';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            }
+            link.setAttribute('href', url);
+            link.setAttribute('download', `Classroom_Log_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+            link.click();
+            URL.revokeObjectURL(url);
         };
 
         window.onload = () => {
