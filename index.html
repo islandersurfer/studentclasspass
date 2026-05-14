@@ -107,9 +107,9 @@
         <!-- LOGS DISPLAY -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div class="lg:col-span-2 bg-white p-6 rounded-xl shadow-lg border border-gray-200 h-full">
-                <h2 class="text-xl font-bold text-indigo-700 border-b border-indigo-100 pb-2">
-                    Students Currently Out 
-                    <span id="outCount" class="ml-2 inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span>
+                <h2 class="text-xl font-bold text-indigo-700 border-b border-indigo-100 pb-2 flex justify-between items-center">
+                    <span>Students Currently Out</span>
+                    <span id="outCount" class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-indigo-100 text-sm font-semibold text-indigo-600">0</span>
                 </h2>
                 <div id="activeLogContentWrapper" class="pt-4">
                     <p class="text-gray-400 italic mb-3" id="noActiveMessage">No students currently signed out.</p>
@@ -144,11 +144,16 @@
                         <button onclick="saveRoster()" class="mt-3 bg-indigo-500 text-white py-2 rounded-lg text-sm w-full">Save Roster</button>
                         
                         <div class="mt-6 pt-4 border-t">
-                            <p class="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wider">Today's History (Top 10):</p>
-                            <div id="completedLogDisplay" class="space-y-2 max-h-40 overflow-y-auto pr-2"></div>
+                            <p class="font-semibold text-gray-700 mb-2 text-xs uppercase tracking-wider flex justify-between items-center">
+                                Today's Full History:
+                                <span id="historyCount" class="text-indigo-400 font-normal">0 entries</span>
+                            </p>
+                            <div id="completedLogDisplay" class="space-y-2 max-h-64 overflow-y-auto pr-2 border-b mb-4 pb-2"></div>
                             <div class="mt-4 flex flex-col gap-2">
-                                <button onclick="downloadLog()" class="w-full bg-gray-100 text-gray-600 text-xs py-2 rounded border">Export Log & QR 💾</button>
-                                <button onclick="clearAllSessions()" class="w-full bg-red-50 text-red-600 text-xs py-2 rounded">Clear All Logs</button>
+                                <button onclick="openExportModal()" class="w-full bg-indigo-600 text-white font-bold text-xs py-3 rounded-lg shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                                    <span>💾</span> Export Complete Log & QR
+                                </button>
+                                <button onclick="clearAllSessions()" class="w-full bg-red-50 text-red-600 text-xs py-2 rounded-lg border border-red-100">Clear All Logs</button>
                             </div>
                         </div>
                     </div>
@@ -158,11 +163,19 @@
     </div>
 
     <!-- QR MODAL -->
-    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-lg shadow-xl text-center max-w-sm">
-            <h2 class="text-xl font-bold mb-4">Log Export</h2>
-            <div id="qrcode" class="flex justify-center mb-4"></div>
-            <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-blue-600 text-white px-4 py-2 rounded font-bold w-full">Close</button>
+    <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-60 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl text-center max-w-md w-full">
+            <h2 class="text-2xl font-bold mb-2">Export Data</h2>
+            <p class="text-gray-500 text-sm mb-6">Scan the QR for a text summary or download the full log.</p>
+            
+            <div id="qrcode" class="flex justify-center mb-6 bg-white p-4 rounded-xl border"></div>
+            
+            <div class="flex flex-col gap-3">
+                <button onclick="initiateCsvDownload()" class="bg-green-600 text-white px-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-green-700 transition-colors">
+                    <span>📄</span> Download CSV File
+                </button>
+                <button onclick="document.getElementById('qrModal').classList.add('hidden')" class="bg-gray-100 text-gray-600 px-4 py-3 rounded-xl font-bold border hover:bg-gray-200">Close</button>
+            </div>
         </div>
     </div>
 
@@ -178,89 +191,50 @@
 
         const HARDCODED_ROSTER_LIST = {
             '1': [
-                { id: "12345", name: "Student Period 1" },
-                { id: "47006988", name: "Barkas, Blake K." },  
-                { id: "47002194", name: "Bennett, Cole R." }, 
-                { id: "47009608", name: "Castro Valle, Isaac" },  
-                { id: "47003213", name: "Cohn, Jaylen L." },  
-                { id: "47002556", name: "Coker, Ryan B." },  
-                { id: "47003247", name: "Craig, Logan R." },  
-                { id: "47009653", name: "Hinkson, Aidan S." },  
-                { id: "47006816", name: "Irwig, Stephanie L." },  
-                { id: "47005250", name: "Koczan, Paige E." },  
-                { id: "47002565", name: "McCann, Logan N." },  
-                { id: "47007936", name: "Moore, Henry D." },  
-                { id: "47010212", name: "Nutter, Micheal T." },  
-                { id: "47002880", name: "Oytas, Kyle M." },  
-                { id: "47001830", name: "Peterson, Kylie L." }, 
-                { id: "47009154", name: "Quintana, Julio C. Jr" },  
-                { id: "47005051", name: "Reyes, lan C." },  
-                { id: "47006595", name: "Smith, Thomas W." },  
-                { id: "47009427", name: "Suarez, Theo A." },  
-                { id: "47006976", name: "Tillner, Kesler J." },
-                { id: "47005508", name: "Dunn, Sydney"},
-                { id: "47005507", name: "Dunn, Breck"},
-                { id: "47002816", name: "Hoak, Bri"}
+                { id: "47006988", name: "Barkas, Blake K." }, { id: "47002194", name: "Bennett, Cole R." }, 
+                { id: "47009608", name: "Castro Valle, Isaac" }, { id: "47003213", name: "Cohn, Jaylen L." },  
+                { id: "47002556", name: "Coker, Ryan B." }, { id: "47003247", name: "Craig, Logan R." },  
+                { id: "47009653", name: "Hinkson, Aidan S." }, { id: "47006816", name: "Irwig, Stephanie L." },  
+                { id: "47005250", name: "Koczan, Paige E." }, { id: "47002565", name: "McCann, Logan N." },  
+                { id: "47007936", name: "Moore, Henry D." }, { id: "47010212", name: "Nutter, Micheal T." },  
+                { id: "47002880", name: "Oytas, Kyle M." }, { id: "47001830", name: "Peterson, Kylie L." }, 
+                { id: "47009154", name: "Quintana, Julio C. Jr" }, { id: "47005051", name: "Reyes, lan C." },  
+                { id: "47006595", name: "Smith, Thomas W." }, { id: "47009427", name: "Suarez, Theo A." },  
+                { id: "47006976", name: "Tillner, Kesler J." }, { id: "47005508", name: "Dunn, Sydney"},
+                { id: "47005507", name: "Dunn, Brecki"}, { id: "47002816", name: "Hoak, Bri"}
             ],
             '2': [
-                { id: "12345", name: "Student Period 2" },
-                { id: "47006988", name: "Barkas, Blake K." }, 
-                { id: "47002693", name: "Chalepas, Ryan A." }, 
-                { id: "47002556", name: "Coker, Ryan B." }, 
-                { id: "47003408", name: "Cooper, Liam K." }, 
-                { id: "47005852", name: "Gilbert, Timothy Q." }, 
-                { id: "47002617", name: "Grube, Tobin" }, 
-                { id: "47002696", name: "Guymon, Stanley W." }, 
-                { id: "47009498", name: "Kaul, Jane B." }, 
-                { id: "47005250", name: "Koczan, Paige E." }, 
-                { id: "47008889", name: "Lavalle, Pablo" }, 
-                { id: "47002564", name: "McCann, Luke R." }, 
-                { id: "47010376", name: "Menghani, Sonali" }, 
-                { id: "47007936", name: "Moore, Henry D." }, 
-                { id: "47009648", name: "Nehodiuk, Artem" }, 
-                { id: "47004264", name: "Nette, Christian Dane Z." }, 
-                { id: "47010212", name: "Nutter, Micheal T." }, 
-                { id: "47007984", name: "Peralta, Gerardo V." }, 
-                { id: "47005051", name: "Reyes, Ian C." }, 
-                { id: "47009925", name: "Russo, Vincent A." }, 
-                { id: "47003688", name: "Stevens, Xavier C." }, 
-                { id: "47002887", name: "Tamez Munoz, Juan P." }, 
-                { id: "47002713", name: "Vinegrad, Daniel" }, 
-                { id: "47006174", name: "Wilbur, Sean T." }, 
-                { id: "47002903", name: "Youngblood, Anton" },
+                { id: "47006988", name: "Barkas, Blake K." }, { id: "47002693", name: "Chalepas, Ryan A." }, 
+                { id: "47002556", name: "Coker, Ryan B." }, { id: "47003408", name: "Cooper, Liam K." }, 
+                { id: "47005852", name: "Gilbert, Timothy Q." }, { id: "47002617", name: "Grube, Tobin" }, 
+                { id: "47002696", name: "Guymon, Stanley W." }, { id: "47009498", name: "Kaul, Jane B." }, 
+                { id: "47005250", name: "Koczan, Paige E." }, { id: "47008889", name: "Lavalle, Pablo" }, 
+                { id: "47002564", name: "McCann, Luke R." }, { id: "47010376", name: "Menghani, Sonali" }, 
+                { id: "47007936", name: "Moore, Henry D." }, { id: "47009648", name: "Nehodiuk, Artem" }, 
+                { id: "47004264", name: "Nette, Christian Dane Z." }, { id: "47010212", name: "Nutter, Micheal T." }, 
+                { id: "47007984", name: "Peralta, Gerardo V." }, { id: "47005051", name: "Reyes, Ian C." }, 
+                { id: "47009925", name: "Russo, Vincent A." }, { id: "47003688", name: "Stevens, Xavier C." }, 
+                { id: "47002887", name: "Tamez Munoz, Juan P." }, { id: "47002713", name: "Vinegrad, Daniel" }, 
+                { id: "47006174", name: "Wilbur, Sean T." }, { id: "47002903", name: "Youngblood, Anton" },
                 { id: "47005560", name: "Reidnarson, Spencer" }
             ],
             '3': [
                 { id: "302", name: "Aidan Arendt" }
             ],
             '4': [
-                { id: "12345", name: "Student Period 4" },
-                { id: "47010769", name: "Ahumada, Ezra C." }, 
-                { id: "47010709", name: "Akonni, Talin J." }, 
-                { id: "47008378", name: "Aston, Porter L." }, 
-                { id: "47009438", name: "Avalos, Leslee E." }, 
-                { id: "47002195", name: "Bennett, Katherine M." }, 
-                { id: "47010311", name: "Bodin, Thomas" }, 
-                { id: "47008075", name: "Ertekin, Devin E." }, 
-                { id: "47010241", name: "Hernandez Gastelum, Ana Sofia" }, 
-                { id: "47009114", name: "Iniguez, Ximena S." }, 
-                { id: "47003298", name: "Jackson, Charlotte E." }, 
-                { id: "47010371", name: "Johnson, Gilbert I. Jr." }, 
-                { id: "47010266", name: "Mensah-Baah, Danielle-Elizabeth M." }, 
-                { id: "47009971", name: "Mor, Nicolas J." }, 
-                { id: "47006633", name: "Olson, Emma E." }, 
-                { id: "47007224", name: "Pederziani Cole, Madden I." }, 
-                { id: "47009154", name: "Quintana, Julio C. Jr" }, 
-                { id: "47003256", name: "Roos, Nadia J." }, 
-                { id: "47003934", name: "Rose, Christopher M." }, 
-                { id: "47010365", name: "Rugama, Julieta" }, 
-                { id: "47004087", name: "Tamariz, Sebastian A." }, 
-                { id: "47003931", name: "Toohey, Fiona G." }, 
-                { id: "47006718", name: "Ward, Landon J." }, 
-                { id: "47001822", name: "Worth, Jayden M." },
-                { id: "47006951", name: "Reuter, Miles"},
-                { id: "47004087", name: "Tabariz, Sebastian" },
-                { id: "47003311", name: "Marin, Sunny" }
+                { id: "47010769", name: "Ahumada, Ezra C." }, { id: "47010709", name: "Akonni, Talin J." }, 
+                { id: "47008378", name: "Aston, Porter L." }, { id: "47009438", name: "Avalos, Leslee E." }, 
+                { id: "47002195", name: "Bennett, Katherine M." }, { id: "47010311", name: "Bodin, Thomas" }, 
+                { id: "47008075", name: "Ertekin, Devin E." }, { id: "47010241", name: "Hernandez Gastelum, Ana Sofia" }, 
+                { id: "47009114", name: "Iniguez, Ximena S." }, { id: "47003298", name: "Jackson, Charlotte E." }, 
+                { id: "47010371", name: "Johnson, Gilbert I. Jr." }, { id: "47010266", name: "Mensah-Baah, Danielle-Elizabeth M." }, 
+                { id: "47009971", name: "Mor, Nicolas J." }, { id: "47006633", name: "Olson, Emma E." }, 
+                { id: "47007224", name: "Pederziani Cole, Madden I." }, { id: "47009154", name: "Quintana, Julio C. Jr" }, 
+                { id: "47003256", name: "Roos, Nadia J." }, { id: "47003934", name: "Rose, Christopher M." }, 
+                { id: "47010365", name: "Rugama, Julieta" }, { id: "47004087", name: "Tamariz, Sebastian A." }, 
+                { id: "47003931", name: "Toohey, Fiona G." }, { id: "47006718", name: "Ward, Landon J." }, 
+                { id: "47001822", name: "Worth, Jayden M." }, { id: "47006951", name: "Reuter, Miles"},
+                { id: "47004087", name: "Tabariz, Sebastian" }, { id: "47003311", name: "Marin, Sunny" }
             ]
         };
 
@@ -274,7 +248,7 @@
             const s2 = document.getElementById('step2');
             s2.classList.remove('hidden');
             s2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            handleIdLookup(); // Refresh preview if ID already in input
+            handleIdLookup();
         };
 
         window.setReason = function(r) {
@@ -305,34 +279,21 @@
         // === DATA LOGIC ===
         function findStudent(idVal, period) {
             if (!idVal || !period) return null;
-            
-            // Clean the input ID for matching
             const targetId = String(idVal).trim();
-            
-            // Look in Teacher-added roster
             const teacherList = dynamicRoster[period] || [];
             let found = teacherList.find(s => String(s.id).trim() === targetId);
-            
-            // If not found, look in Hardcoded roster
             if (!found) {
                 const hardcodedList = HARDCODED_ROSTER_LIST[period] || [];
                 found = hardcodedList.find(s => String(s.id).trim() === targetId);
             }
-            
             return found;
         }
 
-        // === ID LOOKUP & PREVIEW ===
         window.handleIdLookup = function() {
             const idVal = document.getElementById('studentNameInput').value.trim();
             const previewEl = document.getElementById('namePreview');
             const period = wizardData.period;
-
-            if (!idVal || !period) {
-                previewEl.textContent = "";
-                return;
-            }
-
+            if (!idVal || !period) { previewEl.textContent = ""; return; }
             const student = findStudent(idVal, period);
             if (student) {
                 previewEl.textContent = `Student: ${student.name}`;
@@ -375,33 +336,17 @@
             const input = document.getElementById('studentNameInput');
             const idValue = input.value.trim();
             const { period, reason } = wizardData;
-
             if (!idValue) { triggerError("Enter ID!"); return; }
             if (!reason || !period) { triggerError("Incomplete steps!"); return; }
-
             const student = findStudent(idValue, period);
-            if (!student) {
-                triggerError(`Invalid ID for Period ${period}.`);
-                return;
-            }
-
+            if (!student) { triggerError(`Invalid ID for Period ${period}.`); return; }
             const name = student.name;
-
             if (reason === 'Restroom') {
                 const outCount = sessions.filter(s => s.reason === 'Restroom' && s.inTime === null).length;
-                if (outCount >= 2) {
-                    triggerError("Wait! Restroom limit reached (2).");
-                    return;
-                }
+                if (outCount >= 2) { triggerError("Wait! Restroom limit reached (2)."); return; }
             }
-
-            if (sessions.some(s => s.name === name && s.inTime === null)) {
-                triggerError(`${name} is already signed out!`);
-                return;
-            }
-
+            if (sessions.some(s => s.name === name && s.inTime === null)) { triggerError(`${name} is already signed out!`); return; }
             const wasPreviouslyOut = sessions.some(s => s.name === name && s.period === period && s.reason === reason);
-            
             sessions.push({ 
                 name, 
                 reason, 
@@ -410,52 +355,27 @@
                 inTime: null,
                 isMultiUse: wasPreviouslyOut
             });
-            
             localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-            
-            triggerSuccess(`${name} is now signed out.`);
-            
-            setTimeout(() => {
-                resetWizard();
-                renderLogs();
-            }, 1000);
+            triggerSuccess(`${name} signed out.`);
+            setTimeout(() => { resetWizard(); renderLogs(); }, 1000);
         };
 
         window.handleSignIn = function() {
             const input = document.getElementById('studentNameInput');
             const idValue = input.value.trim();
             const period = wizardData.period;
-
             if (!idValue) { triggerError("Enter ID!"); return; }
-
             const student = findStudent(idValue, period);
-            if (!student) {
-                triggerError(`Invalid ID for Period ${period}.`);
-                return;
-            }
-
+            if (!student) { triggerError(`Invalid ID for Period ${period}.`); return; }
             const idx = sessions.findIndex(s => s.name === student.name && s.period === period && s.inTime === null);
-            if (idx === -1) {
-                triggerError(`${student.name} not found in 'Out' list.`);
-                return;
-            }
-
+            if (idx === -1) { triggerError(`${student.name} not out.`); return; }
             const now = Date.now();
             sessions[idx].inTime = now;
             sessions[idx].duration = now - sessions[idx].outTime;
-            
-            if (sessions[idx].reason === 'Restroom' && (sessions[idx].duration / 60000) > 10) {
-                sessions[idx].exceededTime = true;
-            }
-
+            if (sessions[idx].reason === 'Restroom' && (sessions[idx].duration / 60000) > 10) { sessions[idx].exceededTime = true; }
             localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions));
-            
             triggerSuccess(`Welcome back, ${student.name}!`);
-
-            setTimeout(() => {
-                resetWizard();
-                renderLogs();
-            }, 1000);
+            setTimeout(() => { resetWizard(); renderLogs(); }, 1000);
         };
 
         // === TEACHER CONTROLS ===
@@ -487,6 +407,7 @@
 
         // === HELPERS ===
         function formatDuration(ms) {
+            if (!ms) return '0m 0s';
             const m = Math.floor(ms / 60000);
             const s = Math.floor((ms % 60000) / 1000);
             return `${m}m ${s}s`;
@@ -498,17 +419,17 @@
             const activeLog = document.getElementById('activeLogDisplay');
             const completedLog = document.getElementById('completedLogDisplay');
             const activeStudents = sessions.filter(s => s.inTime === null);
+            const completedStudents = sessions.filter(s => s.inTime !== null);
             
             document.getElementById('outCount').textContent = activeStudents.length;
+            document.getElementById('historyCount').textContent = `${completedStudents.length} entries`;
             document.getElementById('noActiveMessage').classList.toggle('hidden', activeStudents.length > 0);
             
             activeLog.innerHTML = '';
             activeStudents.sort((a,b) => b.outTime - a.outTime).forEach(student => {
                 const div = document.createElement('div');
-                div.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200`;
-                
+                div.className = `${student.reason === 'Office Pass' ? 'status-office' : 'status-out'} p-3 rounded-lg flex justify-between items-center shadow-sm border border-gray-200 fade-in`;
                 const alertTag = student.isMultiUse ? `<span class="text-[10px] bg-red-100 text-red-600 px-1 rounded ml-1 font-bold">2ND+ TRIP</span>` : '';
-
                 div.innerHTML = `
                     <div>
                         <p class="font-bold text-gray-800">${student.name} ${alertTag}</p>
@@ -521,11 +442,15 @@
             });
 
             completedLog.innerHTML = '';
-            sessions.filter(s => s.inTime !== null).slice(-10).reverse().forEach(s => {
+            completedStudents.slice().reverse().forEach(s => {
                 const div = document.createElement('div');
                 const timeColor = s.exceededTime ? 'text-red-600 font-bold' : 'text-gray-500';
-                div.className = 'status-in p-2 rounded text-[10px] border border-green-200 flex justify-between';
-                div.innerHTML = `<span><b>${s.name}</b></span> <span class="${timeColor}">${formatDuration(s.duration)}</span>`;
+                div.className = 'status-in p-2 rounded text-[11px] border border-green-200 flex justify-between';
+                div.innerHTML = `
+                    <div>
+                        <b>${s.name}</b> <span class="text-gray-400 font-normal ml-1">P${s.period} • ${s.reason}</span>
+                    </div> 
+                    <span class="${timeColor}">${formatDuration(s.duration)}</span>`;
                 completedLog.appendChild(div);
             });
             updateTimers();
@@ -539,15 +464,54 @@
         }
 
         window.clearAllSessions = function() {
-            if(confirm("Clear all logs?")) { sessions = []; localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); renderLogs(); }
+            if(confirm("DANGER: Clear all logs for today? This cannot be undone.")) { 
+                sessions = []; 
+                localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions)); 
+                renderLogs(); 
+            }
         };
 
-        window.downloadLog = function() {
-            const text = sessions.map(s => `${s.name}, P${s.period}, ${s.reason}, Out: ${formatTime(s.outTime)}, In: ${s.inTime ? formatTime(s.inTime) : 'N/A'}`).join('\n');
-            const qr = document.getElementById("qrcode");
-            qr.innerHTML = "";
-            new QRCode(qr, { text: text.slice(0, 1000), width: 180, height: 180 });
+        // --- UPDATED EXPORT LOGIC ---
+        window.openExportModal = function() {
+            if (sessions.length === 0) {
+                alert("No data to export yet!");
+                return;
+            }
+
+            // Generate QR Summary
+            const textSummary = "LOG: " + new Date().toLocaleDateString() + "\n" + 
+                sessions.map(s => `${s.name}: ${s.reason} (${formatDuration(s.duration)})`).join('\n').slice(0, 1000);
+            
+            const qrContainer = document.getElementById("qrcode");
+            qrContainer.innerHTML = "";
+            new QRCode(qrContainer, { text: textSummary, width: 220, height: 220 });
+
             document.getElementById('qrModal').classList.remove('hidden');
+        };
+
+        window.initiateCsvDownload = function() {
+            if (sessions.length === 0) return;
+
+            const csvHeader = "Name,Period,Reason,Out Time,In Time,Duration (ms),Duration (text),Exceeded Limit\n";
+            const csvRows = sessions.map(s => {
+                return `"${s.name}",${s.period},"${s.reason}","${new Date(s.outTime).toLocaleString()}","${s.inTime ? new Date(s.inTime).toLocaleString() : 'STILL OUT'}",${s.duration || 0},"${formatDuration(s.duration)}",${s.exceededTime || false}`;
+            }).join('\n');
+
+            const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (navigator.msSaveBlob) { // IE 10+
+                navigator.msSaveBlob(blob, filename);
+            } else {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `Classroom_Log_${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
         };
 
         window.onload = () => {
