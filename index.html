@@ -275,7 +275,7 @@
                 { id: "47005560", name: "Reidnarson, Spencer" }
             ],
             '3': [
-                { id: "302", name: "Aidan Arendt" }
+                { id: "12345", name: "Aidan Arendt" }
             ],
             '4': [
                 { id: "47010769", name: "Ahumada, Ezra C." }, { id: "47010709", name: "Akonni, Talin J." }, 
@@ -475,6 +475,20 @@
 
         function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
 
+
+
+        // Helper function to extract date and day string (e.g., "6/2/2026 Monday")
+        function formatDateAndDay(ts) {
+            const d = new Date(ts);
+            const dateStr = d.toLocaleDateString();
+            const dayStr = d.toLocaleDateString([], { weekday: 'long' });
+            return `${dateStr} ${dayStr}`;
+        }
+
+
+
+
+
         window.renderLogs = function() {
             const activeLog = document.getElementById('activeLogDisplay');
             const completedLog = document.getElementById('completedLogDisplay');
@@ -551,11 +565,14 @@
                 return;
             }
             const area = document.getElementById('copyableArea');
-            let text = "NAME\tPERIOD\tREASON\tOUT TIME\tIN TIME\tDURATION\n";
+            let text = "NAME\tPERIOD\tREASON\tDATE\tOUT TIME\tIN TIME\tDURATION\n";
             text += "--------------------------------------------------------------------------------\n";
             sessions.forEach(s => {
                 const inT = s.inTime ? formatTime(s.inTime) : "STILL OUT";
-                text += `${s.name}\tP${s.period}\t${s.reason}\t${formatTime(s.outTime)}\t${inT}\t${formatDuration(s.duration)}\n`;
+                const dateAndDay = formatDateAndDay(s.outTime); // Get date & day
+
+
+                text += `${s.name}\tP${s.period}\t${s.reason}\t${dateAndDay}\t${formatTime(s.outTime)}\t${inT}\t${formatDuration(s.duration)}\n`;
             });
             area.textContent = text;
             document.getElementById('copyTextModal').classList.remove('hidden');
@@ -582,9 +599,12 @@
 
         window.initiateCsvDownload = function() {
             if (sessions.length === 0) return;
-            const csvHeader = "Name,Period,Reason,Out Time,In Time,Duration (ms),Duration (text),Exceeded Limit\n";
+            // 1. Added "Date" column header
+            const csvHeader = "Name,Period,Reason,Date,Out Time,In Time,Duration (ms),Duration (text),Exceeded Limit\n";
             const csvRows = sessions.map(s => {
-                return `"${s.name}",${s.period},"${s.reason}","${new Date(s.outTime).toLocaleString()}","${s.inTime ? new Date(s.inTime).toLocaleString() : 'STILL OUT'}",${s.duration || 0},"${formatDuration(s.duration)}",${s.exceededTime || false}`;
+                const dateAndDay = formatDateAndDay(s.outTime); // Get date & day
+                // 2. Inserted dateAndDay into the CSV row data
+                return `"${s.name}",${s.period},"${s.reason}","${dateAndDay}","${new Date(s.outTime).toLocaleString()}","${s.inTime ? new Date(s.inTime).toLocaleString() : 'STILL OUT'}",${s.duration || 0},"${formatDuration(s.duration)}",${s.exceededTime || false}`;
             }).join('\n');
             const blob = new Blob([csvHeader + csvRows], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
