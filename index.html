@@ -636,7 +636,7 @@
                 const dateAndDay = formatDateAndDay(s.outTime);
 
                 const isOverTen = s.reason === 'Restroom' && s.duration && (s.duration / 60000) > 10;
-                const flagMark = (isOverTen || s.isMultiUse) ? "++" : "";
+                const flagMark = (isOverTen || s.isMultiUse) ? "Over 10" : "";
 
                 text += `${s.name}\tP${s.period}\t${s.reason}\t${dateAndDay}\t${formatTime(s.outTime)}\t${inT}\t${formatDuration(s.duration)}\t${flagMark}\n`;
             });
