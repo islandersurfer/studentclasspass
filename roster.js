@@ -4,7 +4,6 @@
                
             ],
             '2': [
-                { id: "12345", name: "Temporary Student " }, 
                 { id: "47008690", name: "Benjamin, Lorenzo" },
                 { id: "47002687", name: "Berk, Logan" },
                 { id: "47009015", name: "Bona, Oscar" },
